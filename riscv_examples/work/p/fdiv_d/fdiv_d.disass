@@ -1,0 +1,686 @@
+
+/home/vsysuser/workspace/riscv-desanv01/riscv_examples/work/p/fdiv_d/fdiv_d.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text.init:
+
+0000000080000000 <_start>:
+    80000000:	a09d                	j	80000066 <reset_vector>
+    80000002:	0001                	nop
+
+0000000080000004 <trap_vector>:
+    80000004:	34202f73          	csrr	t5,mcause
+    80000008:	4fa1                	li	t6,8
+    8000000a:	03ff0463          	beq	t5,t6,80000032 <write_tohost>
+    8000000e:	4fa5                	li	t6,9
+    80000010:	03ff0163          	beq	t5,t6,80000032 <write_tohost>
+    80000014:	4fad                	li	t6,11
+    80000016:	01ff0e63          	beq	t5,t6,80000032 <write_tohost>
+    8000001a:	00000f13          	li	t5,0
+    8000001e:	000f0363          	beqz	t5,80000024 <trap_vector+0x20>
+    80000022:	8f02                	jr	t5
+    80000024:	34202f73          	csrr	t5,mcause
+    80000028:	000f5363          	bgez	t5,8000002e <handle_exception>
+    8000002c:	a009                	j	8000002e <handle_exception>
+
+000000008000002e <handle_exception>:
+    8000002e:	5391e193          	or	gp,gp,1337
+
+0000000080000032 <write_tohost>:
+    80000032:	00001f17          	auipc	t5,0x1
+    80000036:	fc3f2723          	sw	gp,-50(t5) # 80001000 <tohost>
+    8000003a:	00001f17          	auipc	t5,0x1
+    8000003e:	fc0f2523          	sw	zero,-54(t5) # 80001004 <tohost+0x4>
+
+0000000080000042 <shakti_end>:
+    80000042:	0000100f          	fence.i
+    80000046:	00020fb7          	lui	t6,0x20
+    8000004a:	00002f17          	auipc	t5,0x2
+    8000004e:	fb6f0f13          	add	t5,t5,-74 # 80002000 <_end>
+    80000052:	01efa023          	sw	t5,0(t6) # 20000 <_start-0x7ffe0000>
+    80000056:	00002f17          	auipc	t5,0x2
+    8000005a:	faaf0f13          	add	t5,t5,-86 # 80002000 <_end>
+    8000005e:	01efa423          	sw	t5,8(t6)
+    80000062:	01efa623          	sw	t5,12(t6)
+
+0000000080000066 <reset_vector>:
+    80000066:	4081                	li	ra,0
+    80000068:	4101                	li	sp,0
+    8000006a:	4181                	li	gp,0
+    8000006c:	4201                	li	tp,0
+    8000006e:	4281                	li	t0,0
+    80000070:	4301                	li	t1,0
+    80000072:	4381                	li	t2,0
+    80000074:	4401                	li	s0,0
+    80000076:	4481                	li	s1,0
+    80000078:	4501                	li	a0,0
+    8000007a:	4581                	li	a1,0
+    8000007c:	4601                	li	a2,0
+    8000007e:	4681                	li	a3,0
+    80000080:	4701                	li	a4,0
+    80000082:	4781                	li	a5,0
+    80000084:	4801                	li	a6,0
+    80000086:	4881                	li	a7,0
+    80000088:	4901                	li	s2,0
+    8000008a:	4981                	li	s3,0
+    8000008c:	4a01                	li	s4,0
+    8000008e:	4a81                	li	s5,0
+    80000090:	4b01                	li	s6,0
+    80000092:	4b81                	li	s7,0
+    80000094:	4c01                	li	s8,0
+    80000096:	4c81                	li	s9,0
+    80000098:	4d01                	li	s10,0
+    8000009a:	4d81                	li	s11,0
+    8000009c:	4e01                	li	t3,0
+    8000009e:	4e81                	li	t4,0
+    800000a0:	4f01                	li	t5,0
+    800000a2:	4f81                	li	t6,0
+    800000a4:	f1402573          	csrr	a0,mhartid
+    800000a8:	e101                	bnez	a0,800000a8 <reset_vector+0x42>
+    800000aa:	00000297          	auipc	t0,0x0
+    800000ae:	01228293          	add	t0,t0,18 # 800000bc <reset_vector+0x56>
+    800000b2:	30529073          	csrw	mtvec,t0
+    800000b6:	74445073          	csrw	0x744,8
+    800000ba:	0001                	nop
+    800000bc:	00000297          	auipc	t0,0x0
+    800000c0:	01028293          	add	t0,t0,16 # 800000cc <reset_vector+0x66>
+    800000c4:	30529073          	csrw	mtvec,t0
+    800000c8:	18005073          	csrw	satp,0
+    800000cc:	30405073          	csrw	mie,0
+    800000d0:	00000297          	auipc	t0,0x0
+    800000d4:	01428293          	add	t0,t0,20 # 800000e4 <reset_vector+0x7e>
+    800000d8:	30529073          	csrw	mtvec,t0
+    800000dc:	30205073          	csrw	medeleg,0
+    800000e0:	30305073          	csrw	mideleg,0
+    800000e4:	4181                	li	gp,0
+    800000e6:	00000297          	auipc	t0,0x0
+    800000ea:	f1e28293          	add	t0,t0,-226 # 80000004 <trap_vector>
+    800000ee:	30529073          	csrw	mtvec,t0
+    800000f2:	4505                	li	a0,1
+    800000f4:	057e                	sll	a0,a0,0x1f
+    800000f6:	00055a63          	bgez	a0,8000010a <reset_vector+0xa4>
+    800000fa:	0ff0000f          	fence
+    800000fe:	4185                	li	gp,1
+    80000100:	05d00893          	li	a7,93
+    80000104:	4501                	li	a0,0
+    80000106:	00000073          	ecall
+    8000010a:	00000293          	li	t0,0
+    8000010e:	00028963          	beqz	t0,80000120 <reset_vector+0xba>
+    80000112:	10529073          	csrw	stvec,t0
+    80000116:	62ad                	lui	t0,0xb
+    80000118:	1092829b          	addw	t0,t0,265 # b109 <_start-0x7fff4ef7>
+    8000011c:	30229073          	csrw	medeleg,t0
+    80000120:	30005073          	csrw	mstatus,0
+    80000124:	6509                	lui	a0,0x2
+    80000126:	30052073          	csrs	mstatus,a0
+    8000012a:	00305073          	csrw	fcsr,0
+    8000012e:	00000297          	auipc	t0,0x0
+    80000132:	01428293          	add	t0,t0,20 # 80000142 <fdiv_d_exact_positive>
+    80000136:	34129073          	csrw	mepc,t0
+    8000013a:	f1402573          	csrr	a0,mhartid
+    8000013e:	30200073          	mret
+
+0000000080000142 <fdiv_d_exact_positive>:
+    80000142:	4189                	li	gp,2
+    80000144:	00101073          	fsflags	zero
+    80000148:	6505                	lui	a0,0x1
+    8000014a:	8035051b          	addw	a0,a0,-2045 # 803 <_start-0x7ffff7fd>
+    8000014e:	154e                	sll	a0,a0,0x33
+    80000150:	f20500d3          	fmv.d.x	ft1,a0
+    80000154:	6585                	lui	a1,0x1
+    80000156:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    8000015a:	15ce                	sll	a1,a1,0x33
+    8000015c:	f2058153          	fmv.d.x	ft2,a1
+    80000160:	1a208053          	fdiv.d	ft0,ft1,ft2,rne
+    80000164:	e2000653          	fmv.x.d	a2,ft0
+    80000168:	0010069b          	addw	a3,zero,1
+    8000016c:	16fa                	sll	a3,a3,0x3e
+    8000016e:	5ed61d63          	bne	a2,a3,80000768 <fail>
+    80000172:	00102773          	frflags	a4
+    80000176:	4781                	li	a5,0
+    80000178:	5ef71863          	bne	a4,a5,80000768 <fail>
+
+000000008000017c <fdiv_d_exact_negative>:
+    8000017c:	418d                	li	gp,3
+    8000017e:	00101073          	fsflags	zero
+    80000182:	8030051b          	addw	a0,zero,-2045
+    80000186:	154e                	sll	a0,a0,0x33
+    80000188:	f2050253          	fmv.d.x	ft4,a0
+    8000018c:	6585                	lui	a1,0x1
+    8000018e:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    80000192:	15ce                	sll	a1,a1,0x33
+    80000194:	f20582d3          	fmv.d.x	ft5,a1
+    80000198:	1a5201d3          	fdiv.d	ft3,ft4,ft5,rne
+    8000019c:	e2018653          	fmv.x.d	a2,ft3
+    800001a0:	fff0069b          	addw	a3,zero,-1
+    800001a4:	16fa                	sll	a3,a3,0x3e
+    800001a6:	5cd61163          	bne	a2,a3,80000768 <fail>
+    800001aa:	00102773          	frflags	a4
+    800001ae:	4781                	li	a5,0
+    800001b0:	5af71c63          	bne	a4,a5,80000768 <fail>
+
+00000000800001b4 <fdiv_d_positive_zero>:
+    800001b4:	4191                	li	gp,4
+    800001b6:	00101073          	fsflags	zero
+    800001ba:	4501                	li	a0,0
+    800001bc:	f20503d3          	fmv.d.x	ft7,a0
+    800001c0:	0010059b          	addw	a1,zero,1
+    800001c4:	15fa                	sll	a1,a1,0x3e
+    800001c6:	f2058453          	fmv.d.x	fs0,a1
+    800001ca:	1a838353          	fdiv.d	ft6,ft7,fs0,rne
+    800001ce:	e2030653          	fmv.x.d	a2,ft6
+    800001d2:	4681                	li	a3,0
+    800001d4:	58d61a63          	bne	a2,a3,80000768 <fail>
+    800001d8:	00102773          	frflags	a4
+    800001dc:	4781                	li	a5,0
+    800001de:	58f71563          	bne	a4,a5,80000768 <fail>
+
+00000000800001e2 <fdiv_d_negative_zero>:
+    800001e2:	4195                	li	gp,5
+    800001e4:	00101073          	fsflags	zero
+    800001e8:	fff0051b          	addw	a0,zero,-1
+    800001ec:	157e                	sll	a0,a0,0x3f
+    800001ee:	f2050553          	fmv.d.x	fa0,a0
+    800001f2:	0010059b          	addw	a1,zero,1
+    800001f6:	15fa                	sll	a1,a1,0x3e
+    800001f8:	f20585d3          	fmv.d.x	fa1,a1
+    800001fc:	1ab504d3          	fdiv.d	fs1,fa0,fa1,rne
+    80000200:	e2048653          	fmv.x.d	a2,fs1
+    80000204:	fff0069b          	addw	a3,zero,-1
+    80000208:	16fe                	sll	a3,a3,0x3f
+    8000020a:	54d61f63          	bne	a2,a3,80000768 <fail>
+    8000020e:	00102773          	frflags	a4
+    80000212:	4781                	li	a5,0
+    80000214:	54f71a63          	bne	a4,a5,80000768 <fail>
+
+0000000080000218 <fdiv_d_divide_by_zero>:
+    80000218:	4199                	li	gp,6
+    8000021a:	00101073          	fsflags	zero
+    8000021e:	3ff0051b          	addw	a0,zero,1023
+    80000222:	1552                	sll	a0,a0,0x34
+    80000224:	f20506d3          	fmv.d.x	fa3,a0
+    80000228:	4581                	li	a1,0
+    8000022a:	f2058753          	fmv.d.x	fa4,a1
+    8000022e:	1ae68653          	fdiv.d	fa2,fa3,fa4,rne
+    80000232:	e2060653          	fmv.x.d	a2,fa2
+    80000236:	7ff0069b          	addw	a3,zero,2047
+    8000023a:	16d2                	sll	a3,a3,0x34
+    8000023c:	52d61663          	bne	a2,a3,80000768 <fail>
+    80000240:	00102773          	frflags	a4
+    80000244:	47a1                	li	a5,8
+    80000246:	52f71163          	bne	a4,a5,80000768 <fail>
+
+000000008000024a <fdiv_d_negative_divide_by_zero>:
+    8000024a:	419d                	li	gp,7
+    8000024c:	00101073          	fsflags	zero
+    80000250:	bff0051b          	addw	a0,zero,-1025
+    80000254:	1552                	sll	a0,a0,0x34
+    80000256:	f2050853          	fmv.d.x	fa6,a0
+    8000025a:	4581                	li	a1,0
+    8000025c:	f20588d3          	fmv.d.x	fa7,a1
+    80000260:	1b1807d3          	fdiv.d	fa5,fa6,fa7,rne
+    80000264:	e2078653          	fmv.x.d	a2,fa5
+    80000268:	fff0069b          	addw	a3,zero,-1
+    8000026c:	16d2                	sll	a3,a3,0x34
+    8000026e:	4ed61d63          	bne	a2,a3,80000768 <fail>
+    80000272:	00102773          	frflags	a4
+    80000276:	47a1                	li	a5,8
+    80000278:	4ef71863          	bne	a4,a5,80000768 <fail>
+
+000000008000027c <fdiv_d_zero_by_zero>:
+    8000027c:	41a1                	li	gp,8
+    8000027e:	00101073          	fsflags	zero
+    80000282:	4501                	li	a0,0
+    80000284:	f20509d3          	fmv.d.x	fs3,a0
+    80000288:	4581                	li	a1,0
+    8000028a:	f2058a53          	fmv.d.x	fs4,a1
+    8000028e:	1b498953          	fdiv.d	fs2,fs3,fs4,rne
+    80000292:	e2090653          	fmv.x.d	a2,fs2
+    80000296:	6685                	lui	a3,0x1
+    80000298:	36fd                	addw	a3,a3,-1 # fff <_start-0x7ffff001>
+    8000029a:	16ce                	sll	a3,a3,0x33
+    8000029c:	4cd61663          	bne	a2,a3,80000768 <fail>
+    800002a0:	00102773          	frflags	a4
+    800002a4:	47c1                	li	a5,16
+    800002a6:	4cf71163          	bne	a4,a5,80000768 <fail>
+
+00000000800002aa <fdiv_d_inf_by_inf>:
+    800002aa:	41a5                	li	gp,9
+    800002ac:	00101073          	fsflags	zero
+    800002b0:	7ff0051b          	addw	a0,zero,2047
+    800002b4:	1552                	sll	a0,a0,0x34
+    800002b6:	f2050b53          	fmv.d.x	fs6,a0
+    800002ba:	7ff0059b          	addw	a1,zero,2047
+    800002be:	15d2                	sll	a1,a1,0x34
+    800002c0:	f2058bd3          	fmv.d.x	fs7,a1
+    800002c4:	1b7b0ad3          	fdiv.d	fs5,fs6,fs7,rne
+    800002c8:	e20a8653          	fmv.x.d	a2,fs5
+    800002cc:	6685                	lui	a3,0x1
+    800002ce:	36fd                	addw	a3,a3,-1 # fff <_start-0x7ffff001>
+    800002d0:	16ce                	sll	a3,a3,0x33
+    800002d2:	48d61b63          	bne	a2,a3,80000768 <fail>
+    800002d6:	00102773          	frflags	a4
+    800002da:	47c1                	li	a5,16
+    800002dc:	48f71663          	bne	a4,a5,80000768 <fail>
+
+00000000800002e0 <fdiv_d_inf_by_finite>:
+    800002e0:	41a9                	li	gp,10
+    800002e2:	00101073          	fsflags	zero
+    800002e6:	7ff0051b          	addw	a0,zero,2047
+    800002ea:	1552                	sll	a0,a0,0x34
+    800002ec:	f2050cd3          	fmv.d.x	fs9,a0
+    800002f0:	0010059b          	addw	a1,zero,1
+    800002f4:	15fa                	sll	a1,a1,0x3e
+    800002f6:	f2058d53          	fmv.d.x	fs10,a1
+    800002fa:	1bac8c53          	fdiv.d	fs8,fs9,fs10,rne
+    800002fe:	e20c0653          	fmv.x.d	a2,fs8
+    80000302:	7ff0069b          	addw	a3,zero,2047
+    80000306:	16d2                	sll	a3,a3,0x34
+    80000308:	46d61063          	bne	a2,a3,80000768 <fail>
+    8000030c:	00102773          	frflags	a4
+    80000310:	4781                	li	a5,0
+    80000312:	44f71b63          	bne	a4,a5,80000768 <fail>
+
+0000000080000316 <fdiv_d_finite_by_inf>:
+    80000316:	41ad                	li	gp,11
+    80000318:	00101073          	fsflags	zero
+    8000031c:	0010051b          	addw	a0,zero,1
+    80000320:	157a                	sll	a0,a0,0x3e
+    80000322:	f2050e53          	fmv.d.x	ft8,a0
+    80000326:	7ff0059b          	addw	a1,zero,2047
+    8000032a:	15d2                	sll	a1,a1,0x34
+    8000032c:	f2058ed3          	fmv.d.x	ft9,a1
+    80000330:	1bde0dd3          	fdiv.d	fs11,ft8,ft9,rne
+    80000334:	e20d8653          	fmv.x.d	a2,fs11
+    80000338:	4681                	li	a3,0
+    8000033a:	42d61763          	bne	a2,a3,80000768 <fail>
+    8000033e:	00102773          	frflags	a4
+    80000342:	4781                	li	a5,0
+    80000344:	42f71263          	bne	a4,a5,80000768 <fail>
+
+0000000080000348 <fdiv_d_qnan>:
+    80000348:	41b1                	li	gp,12
+    8000034a:	00101073          	fsflags	zero
+    8000034e:	01ffe537          	lui	a0,0x1ffe
+    80000352:	0495051b          	addw	a0,a0,73 # 1ffe049 <_start-0x7e001fb7>
+    80000356:	0536                	sll	a0,a0,0xd
+    80000358:	a2b50513          	add	a0,a0,-1493
+    8000035c:	0532                	sll	a0,a0,0xc
+    8000035e:	3c550513          	add	a0,a0,965
+    80000362:	0536                	sll	a0,a0,0xd
+    80000364:	abc50513          	add	a0,a0,-1348
+    80000368:	f2050fd3          	fmv.d.x	ft11,a0
+    8000036c:	3ff0059b          	addw	a1,zero,1023
+    80000370:	15d2                	sll	a1,a1,0x34
+    80000372:	f2058053          	fmv.d.x	ft0,a1
+    80000376:	1a0f8f53          	fdiv.d	ft10,ft11,ft0,rne
+    8000037a:	e20f0653          	fmv.x.d	a2,ft10
+    8000037e:	6685                	lui	a3,0x1
+    80000380:	36fd                	addw	a3,a3,-1 # fff <_start-0x7ffff001>
+    80000382:	16ce                	sll	a3,a3,0x33
+    80000384:	3ed61263          	bne	a2,a3,80000768 <fail>
+    80000388:	00102773          	frflags	a4
+    8000038c:	4781                	li	a5,0
+    8000038e:	3cf71d63          	bne	a4,a5,80000768 <fail>
+
+0000000080000392 <fdiv_d_snan>:
+    80000392:	41b5                	li	gp,13
+    80000394:	00101073          	fsflags	zero
+    80000398:	7ff0051b          	addw	a0,zero,2047
+    8000039c:	1552                	sll	a0,a0,0x34
+    8000039e:	0505                	add	a0,a0,1
+    800003a0:	f2050153          	fmv.d.x	ft2,a0
+    800003a4:	3ff0059b          	addw	a1,zero,1023
+    800003a8:	15d2                	sll	a1,a1,0x34
+    800003aa:	f20581d3          	fmv.d.x	ft3,a1
+    800003ae:	1a310253          	fdiv.d	ft4,ft2,ft3,rne
+    800003b2:	e2020653          	fmv.x.d	a2,ft4
+    800003b6:	6685                	lui	a3,0x1
+    800003b8:	36fd                	addw	a3,a3,-1 # fff <_start-0x7ffff001>
+    800003ba:	16ce                	sll	a3,a3,0x33
+    800003bc:	3ad61663          	bne	a2,a3,80000768 <fail>
+    800003c0:	00102773          	frflags	a4
+    800003c4:	47c1                	li	a5,16
+    800003c6:	3af71163          	bne	a4,a5,80000768 <fail>
+
+00000000800003ca <fdiv_d_one_third_rne>:
+    800003ca:	41b9                	li	gp,14
+    800003cc:	00101073          	fsflags	zero
+    800003d0:	3ff0051b          	addw	a0,zero,1023
+    800003d4:	1552                	sll	a0,a0,0x34
+    800003d6:	f20502d3          	fmv.d.x	ft5,a0
+    800003da:	6585                	lui	a1,0x1
+    800003dc:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    800003e0:	15ce                	sll	a1,a1,0x33
+    800003e2:	f2058353          	fmv.d.x	ft6,a1
+    800003e6:	1a628253          	fdiv.d	ft4,ft5,ft6,rne
+    800003ea:	e2020653          	fmv.x.d	a2,ft4
+    800003ee:	03fd56b7          	lui	a3,0x3fd5
+    800003f2:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    800003f6:	06b2                	sll	a3,a3,0xc
+    800003f8:	55568693          	add	a3,a3,1365
+    800003fc:	06b2                	sll	a3,a3,0xc
+    800003fe:	55568693          	add	a3,a3,1365
+    80000402:	06b2                	sll	a3,a3,0xc
+    80000404:	55568693          	add	a3,a3,1365
+    80000408:	36d61063          	bne	a2,a3,80000768 <fail>
+    8000040c:	00102773          	frflags	a4
+    80000410:	4785                	li	a5,1
+    80000412:	34f71b63          	bne	a4,a5,80000768 <fail>
+
+0000000080000416 <fdiv_d_one_third_rtz>:
+    80000416:	41bd                	li	gp,15
+    80000418:	00101073          	fsflags	zero
+    8000041c:	3ff0051b          	addw	a0,zero,1023
+    80000420:	1552                	sll	a0,a0,0x34
+    80000422:	f2050453          	fmv.d.x	fs0,a0
+    80000426:	6585                	lui	a1,0x1
+    80000428:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    8000042c:	15ce                	sll	a1,a1,0x33
+    8000042e:	f20584d3          	fmv.d.x	fs1,a1
+    80000432:	1a9413d3          	fdiv.d	ft7,fs0,fs1,rtz
+    80000436:	e2038653          	fmv.x.d	a2,ft7
+    8000043a:	03fd56b7          	lui	a3,0x3fd5
+    8000043e:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    80000442:	06b2                	sll	a3,a3,0xc
+    80000444:	55568693          	add	a3,a3,1365
+    80000448:	06b2                	sll	a3,a3,0xc
+    8000044a:	55568693          	add	a3,a3,1365
+    8000044e:	06b2                	sll	a3,a3,0xc
+    80000450:	55568693          	add	a3,a3,1365
+    80000454:	30d61a63          	bne	a2,a3,80000768 <fail>
+    80000458:	00102773          	frflags	a4
+    8000045c:	4785                	li	a5,1
+    8000045e:	30f71563          	bne	a4,a5,80000768 <fail>
+
+0000000080000462 <fdiv_d_one_third_rdn>:
+    80000462:	41c1                	li	gp,16
+    80000464:	00101073          	fsflags	zero
+    80000468:	3ff0051b          	addw	a0,zero,1023
+    8000046c:	1552                	sll	a0,a0,0x34
+    8000046e:	f20505d3          	fmv.d.x	fa1,a0
+    80000472:	6585                	lui	a1,0x1
+    80000474:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    80000478:	15ce                	sll	a1,a1,0x33
+    8000047a:	f2058653          	fmv.d.x	fa2,a1
+    8000047e:	1ac5a553          	fdiv.d	fa0,fa1,fa2,rdn
+    80000482:	e2050653          	fmv.x.d	a2,fa0
+    80000486:	03fd56b7          	lui	a3,0x3fd5
+    8000048a:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    8000048e:	06b2                	sll	a3,a3,0xc
+    80000490:	55568693          	add	a3,a3,1365
+    80000494:	06b2                	sll	a3,a3,0xc
+    80000496:	55568693          	add	a3,a3,1365
+    8000049a:	06b2                	sll	a3,a3,0xc
+    8000049c:	55568693          	add	a3,a3,1365
+    800004a0:	2cd61463          	bne	a2,a3,80000768 <fail>
+    800004a4:	00102773          	frflags	a4
+    800004a8:	4785                	li	a5,1
+    800004aa:	2af71f63          	bne	a4,a5,80000768 <fail>
+
+00000000800004ae <fdiv_d_one_third_rup>:
+    800004ae:	41c5                	li	gp,17
+    800004b0:	00101073          	fsflags	zero
+    800004b4:	3ff0051b          	addw	a0,zero,1023
+    800004b8:	1552                	sll	a0,a0,0x34
+    800004ba:	f2050753          	fmv.d.x	fa4,a0
+    800004be:	6585                	lui	a1,0x1
+    800004c0:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    800004c4:	15ce                	sll	a1,a1,0x33
+    800004c6:	f20587d3          	fmv.d.x	fa5,a1
+    800004ca:	1af736d3          	fdiv.d	fa3,fa4,fa5,rup
+    800004ce:	e2068653          	fmv.x.d	a2,fa3
+    800004d2:	03fd56b7          	lui	a3,0x3fd5
+    800004d6:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    800004da:	06b2                	sll	a3,a3,0xc
+    800004dc:	55568693          	add	a3,a3,1365
+    800004e0:	06b2                	sll	a3,a3,0xc
+    800004e2:	55568693          	add	a3,a3,1365
+    800004e6:	06b2                	sll	a3,a3,0xc
+    800004e8:	55668693          	add	a3,a3,1366
+    800004ec:	26d61e63          	bne	a2,a3,80000768 <fail>
+    800004f0:	00102773          	frflags	a4
+    800004f4:	4785                	li	a5,1
+    800004f6:	26f71963          	bne	a4,a5,80000768 <fail>
+
+00000000800004fa <fdiv_d_one_third_rmm>:
+    800004fa:	41c9                	li	gp,18
+    800004fc:	00101073          	fsflags	zero
+    80000500:	3ff0051b          	addw	a0,zero,1023
+    80000504:	1552                	sll	a0,a0,0x34
+    80000506:	f20508d3          	fmv.d.x	fa7,a0
+    8000050a:	6585                	lui	a1,0x1
+    8000050c:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    80000510:	15ce                	sll	a1,a1,0x33
+    80000512:	f2058953          	fmv.d.x	fs2,a1
+    80000516:	1b28c853          	fdiv.d	fa6,fa7,fs2,rmm
+    8000051a:	e2080653          	fmv.x.d	a2,fa6
+    8000051e:	03fd56b7          	lui	a3,0x3fd5
+    80000522:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    80000526:	06b2                	sll	a3,a3,0xc
+    80000528:	55568693          	add	a3,a3,1365
+    8000052c:	06b2                	sll	a3,a3,0xc
+    8000052e:	55568693          	add	a3,a3,1365
+    80000532:	06b2                	sll	a3,a3,0xc
+    80000534:	55568693          	add	a3,a3,1365
+    80000538:	22d61863          	bne	a2,a3,80000768 <fail>
+    8000053c:	00102773          	frflags	a4
+    80000540:	4785                	li	a5,1
+    80000542:	22f71363          	bne	a4,a5,80000768 <fail>
+
+0000000080000546 <fdiv_d_negative_third_rdn>:
+    80000546:	41cd                	li	gp,19
+    80000548:	00101073          	fsflags	zero
+    8000054c:	bff0051b          	addw	a0,zero,-1025
+    80000550:	1552                	sll	a0,a0,0x34
+    80000552:	f2050a53          	fmv.d.x	fs4,a0
+    80000556:	6585                	lui	a1,0x1
+    80000558:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    8000055c:	15ce                	sll	a1,a1,0x33
+    8000055e:	f2058ad3          	fmv.d.x	fs5,a1
+    80000562:	1b5a29d3          	fdiv.d	fs3,fs4,fs5,rdn
+    80000566:	e2098653          	fmv.x.d	a2,fs3
+    8000056a:	fbfd56b7          	lui	a3,0xfbfd5
+    8000056e:	5556869b          	addw	a3,a3,1365 # fffffffffbfd5555 <_end+0xffffffff7bfd3555>
+    80000572:	06b2                	sll	a3,a3,0xc
+    80000574:	55568693          	add	a3,a3,1365
+    80000578:	06b2                	sll	a3,a3,0xc
+    8000057a:	55568693          	add	a3,a3,1365
+    8000057e:	06b2                	sll	a3,a3,0xc
+    80000580:	55668693          	add	a3,a3,1366
+    80000584:	1ed61263          	bne	a2,a3,80000768 <fail>
+    80000588:	00102773          	frflags	a4
+    8000058c:	4785                	li	a5,1
+    8000058e:	1cf71d63          	bne	a4,a5,80000768 <fail>
+
+0000000080000592 <fdiv_d_dynamic_rup>:
+    80000592:	41d1                	li	gp,20
+    80000594:	480d                	li	a6,3
+    80000596:	00281073          	fsrm	a6
+    8000059a:	00101073          	fsflags	zero
+    8000059e:	3ff0051b          	addw	a0,zero,1023
+    800005a2:	1552                	sll	a0,a0,0x34
+    800005a4:	f2050bd3          	fmv.d.x	fs7,a0
+    800005a8:	6585                	lui	a1,0x1
+    800005aa:	8015859b          	addw	a1,a1,-2047 # 801 <_start-0x7ffff7ff>
+    800005ae:	15ce                	sll	a1,a1,0x33
+    800005b0:	f2058c53          	fmv.d.x	fs8,a1
+    800005b4:	1b8bfb53          	fdiv.d	fs6,fs7,fs8
+    800005b8:	e20b0653          	fmv.x.d	a2,fs6
+    800005bc:	03fd56b7          	lui	a3,0x3fd5
+    800005c0:	5556869b          	addw	a3,a3,1365 # 3fd5555 <_start-0x7c02aaab>
+    800005c4:	06b2                	sll	a3,a3,0xc
+    800005c6:	55568693          	add	a3,a3,1365
+    800005ca:	06b2                	sll	a3,a3,0xc
+    800005cc:	55568693          	add	a3,a3,1365
+    800005d0:	06b2                	sll	a3,a3,0xc
+    800005d2:	55668693          	add	a3,a3,1366
+    800005d6:	18d61963          	bne	a2,a3,80000768 <fail>
+    800005da:	00102773          	frflags	a4
+    800005de:	4785                	li	a5,1
+    800005e0:	18f71463          	bne	a4,a5,80000768 <fail>
+    800005e4:	00201073          	fsrm	zero
+
+00000000800005e8 <fdiv_d_exact_subnormal>:
+    800005e8:	41d5                	li	gp,21
+    800005ea:	00101073          	fsflags	zero
+    800005ee:	0010051b          	addw	a0,zero,1
+    800005f2:	1552                	sll	a0,a0,0x34
+    800005f4:	f2050d53          	fmv.d.x	fs10,a0
+    800005f8:	0010059b          	addw	a1,zero,1
+    800005fc:	15fa                	sll	a1,a1,0x3e
+    800005fe:	f2058dd3          	fmv.d.x	fs11,a1
+    80000602:	1bbd0cd3          	fdiv.d	fs9,fs10,fs11,rne
+    80000606:	e20c8653          	fmv.x.d	a2,fs9
+    8000060a:	0010069b          	addw	a3,zero,1
+    8000060e:	16ce                	sll	a3,a3,0x33
+    80000610:	14d61c63          	bne	a2,a3,80000768 <fail>
+    80000614:	00102773          	frflags	a4
+    80000618:	4781                	li	a5,0
+    8000061a:	14f71763          	bne	a4,a5,80000768 <fail>
+
+000000008000061e <fdiv_d_underflow>:
+    8000061e:	41d9                	li	gp,22
+    80000620:	00101073          	fsflags	zero
+    80000624:	4505                	li	a0,1
+    80000626:	f2050ed3          	fmv.d.x	ft9,a0
+    8000062a:	0010059b          	addw	a1,zero,1
+    8000062e:	15fa                	sll	a1,a1,0x3e
+    80000630:	f2058f53          	fmv.d.x	ft10,a1
+    80000634:	1bee8e53          	fdiv.d	ft8,ft9,ft10,rne
+    80000638:	e20e0653          	fmv.x.d	a2,ft8
+    8000063c:	4681                	li	a3,0
+    8000063e:	12d61563          	bne	a2,a3,80000768 <fail>
+    80000642:	00102773          	frflags	a4
+    80000646:	478d                	li	a5,3
+    80000648:	12f71063          	bne	a4,a5,80000768 <fail>
+
+000000008000064c <fdiv_d_overflow_rne>:
+    8000064c:	41dd                	li	gp,23
+    8000064e:	00101073          	fsflags	zero
+    80000652:	7ff0051b          	addw	a0,zero,2047
+    80000656:	1552                	sll	a0,a0,0x34
+    80000658:	157d                	add	a0,a0,-1
+    8000065a:	f2050053          	fmv.d.x	ft0,a0
+    8000065e:	1ff0059b          	addw	a1,zero,511
+    80000662:	15d6                	sll	a1,a1,0x35
+    80000664:	f20580d3          	fmv.d.x	ft1,a1
+    80000668:	1a100fd3          	fdiv.d	ft11,ft0,ft1,rne
+    8000066c:	e20f8653          	fmv.x.d	a2,ft11
+    80000670:	7ff0069b          	addw	a3,zero,2047
+    80000674:	16d2                	sll	a3,a3,0x34
+    80000676:	0ed61963          	bne	a2,a3,80000768 <fail>
+    8000067a:	00102773          	frflags	a4
+    8000067e:	4795                	li	a5,5
+    80000680:	0ef71463          	bne	a4,a5,80000768 <fail>
+
+0000000080000684 <fdiv_d_overflow_rtz>:
+    80000684:	41e1                	li	gp,24
+    80000686:	00101073          	fsflags	zero
+    8000068a:	7ff0051b          	addw	a0,zero,2047
+    8000068e:	1552                	sll	a0,a0,0x34
+    80000690:	157d                	add	a0,a0,-1
+    80000692:	f20501d3          	fmv.d.x	ft3,a0
+    80000696:	1ff0059b          	addw	a1,zero,511
+    8000069a:	15d6                	sll	a1,a1,0x35
+    8000069c:	f2058253          	fmv.d.x	ft4,a1
+    800006a0:	1a419153          	fdiv.d	ft2,ft3,ft4,rtz
+    800006a4:	e2010653          	fmv.x.d	a2,ft2
+    800006a8:	7ff0069b          	addw	a3,zero,2047
+    800006ac:	16d2                	sll	a3,a3,0x34
+    800006ae:	16fd                	add	a3,a3,-1
+    800006b0:	0ad61c63          	bne	a2,a3,80000768 <fail>
+    800006b4:	00102773          	frflags	a4
+    800006b8:	4795                	li	a5,5
+    800006ba:	0af71763          	bne	a4,a5,80000768 <fail>
+
+00000000800006be <fdiv_d_rd_equals_rs1>:
+    800006be:	41e5                	li	gp,25
+    800006c0:	00101073          	fsflags	zero
+    800006c4:	4010051b          	addw	a0,zero,1025
+    800006c8:	1552                	sll	a0,a0,0x34
+    800006ca:	f20502d3          	fmv.d.x	ft5,a0
+    800006ce:	0010059b          	addw	a1,zero,1
+    800006d2:	15fa                	sll	a1,a1,0x3e
+    800006d4:	f2058353          	fmv.d.x	ft6,a1
+    800006d8:	1a6282d3          	fdiv.d	ft5,ft5,ft6,rne
+    800006dc:	e2028653          	fmv.x.d	a2,ft5
+    800006e0:	0010069b          	addw	a3,zero,1
+    800006e4:	16fa                	sll	a3,a3,0x3e
+    800006e6:	08d61163          	bne	a2,a3,80000768 <fail>
+    800006ea:	00102773          	frflags	a4
+    800006ee:	4781                	li	a5,0
+    800006f0:	06f71c63          	bne	a4,a5,80000768 <fail>
+
+00000000800006f4 <fdiv_d_rd_equals_rs2>:
+    800006f4:	41e9                	li	gp,26
+    800006f6:	00101073          	fsflags	zero
+    800006fa:	4010051b          	addw	a0,zero,1025
+    800006fe:	1552                	sll	a0,a0,0x34
+    80000700:	f2050453          	fmv.d.x	fs0,a0
+    80000704:	0010059b          	addw	a1,zero,1
+    80000708:	15fa                	sll	a1,a1,0x3e
+    8000070a:	f20583d3          	fmv.d.x	ft7,a1
+    8000070e:	1a7403d3          	fdiv.d	ft7,fs0,ft7,rne
+    80000712:	e2038653          	fmv.x.d	a2,ft7
+    80000716:	0010069b          	addw	a3,zero,1
+    8000071a:	16fa                	sll	a3,a3,0x3e
+    8000071c:	04d61663          	bne	a2,a3,80000768 <fail>
+    80000720:	00102773          	frflags	a4
+    80000724:	4781                	li	a5,0
+    80000726:	04f71163          	bne	a4,a5,80000768 <fail>
+
+000000008000072a <fdiv_d_chained_dependency>:
+    8000072a:	41ed                	li	gp,27
+    8000072c:	00201073          	fsrm	zero
+    80000730:	00101073          	fsflags	zero
+    80000734:	2010051b          	addw	a0,zero,513
+    80000738:	1556                	sll	a0,a0,0x35
+    8000073a:	f20504d3          	fmv.d.x	fs1,a0
+    8000073e:	0010059b          	addw	a1,zero,1
+    80000742:	15fa                	sll	a1,a1,0x3e
+    80000744:	f2058553          	fmv.d.x	fa0,a1
+    80000748:	1aa485d3          	fdiv.d	fa1,fs1,fa0,rne
+    8000074c:	1aa58653          	fdiv.d	fa2,fa1,fa0,rne
+    80000750:	e2060653          	fmv.x.d	a2,fa2
+    80000754:	0010069b          	addw	a3,zero,1
+    80000758:	16fa                	sll	a3,a3,0x3e
+    8000075a:	00d61763          	bne	a2,a3,80000768 <fail>
+    8000075e:	00102773          	frflags	a4
+    80000762:	e319                	bnez	a4,80000768 <fail>
+    80000764:	00301e63          	bne	zero,gp,80000780 <pass>
+
+0000000080000768 <fail>:
+    80000768:	0ff0000f          	fence
+    8000076c:	00018063          	beqz	gp,8000076c <fail+0x4>
+    80000770:	0186                	sll	gp,gp,0x1
+    80000772:	0011e193          	or	gp,gp,1
+    80000776:	05d00893          	li	a7,93
+    8000077a:	850e                	mv	a0,gp
+    8000077c:	00000073          	ecall
+
+0000000080000780 <pass>:
+    80000780:	0ff0000f          	fence
+    80000784:	4185                	li	gp,1
+    80000786:	05d00893          	li	a7,93
+    8000078a:	4501                	li	a0,0
+    8000078c:	00000073          	ecall
+    80000790:	0000                	unimp
+    80000792:	0000                	unimp
+    80000794:	0000                	unimp
+    80000796:	0000                	unimp
+    80000798:	0000                	unimp
+    8000079a:	0000                	unimp
+    8000079c:	0000                	unimp
+    8000079e:	0000                	unimp
+    800007a0:	0000                	unimp
+    800007a2:	0000                	unimp
+    800007a4:	0000                	unimp
+    800007a6:	0000                	unimp
+    800007a8:	0000                	unimp
+    800007aa:	0000                	unimp
+    800007ac:	0000                	unimp
+    800007ae:	0000                	unimp
+    800007b0:	0000                	unimp
+    800007b2:	0000                	unimp
+    800007b4:	0000                	unimp

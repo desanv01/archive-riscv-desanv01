@@ -1,0 +1,57 @@
+AMOOR.W DESIGN-VERIFICATION PLAN
+================================
+
+Instruction
+-----------
+AMOOR.W rd, rs2, (rs1) (Zaamo within A extension 2.1)
+
+Architectural rule
+------------------
+Atomically load a 32-bit word, return the old word in rd, OR the old word with
+the low 32 bits of rs2, and store the new word. On RV64, rd receives a
+sign-extended old word; upper 32 bits of rs2 are ignored.
+
+Coverage classes
+----------------
+1. Zero, all-one, sign-bit, sparse, dense and alternating words.
+2. Exact old-value return and exact new memory value.
+3. RV64 sign extension of the returned word.
+4. Ignoring upper 32 bits of rs2.
+5. Plain, .aq, .rl and .aqrl encodings.
+6. rd=rs2 and rd=rs1 overlap.
+7. rs2=x0 and rd=x0.
+8. Address RAW, source RAW, result consumer and immediate memory-load hazards.
+9. Back-to-back AMOs to the same naturally aligned word.
+10. Physical and virtual-memory harness runs.
+
+Test IDs
+--------
+2-7   data and RV64 width behavior
+8-10  ordering-bit encodings
+11-14 register overlap and x0 behavior
+15-17 hazards and back-to-back atomic updates
+
+Pass criteria
+-------------
+Each test checks both rd and memory. Spike must pass and C-Class rtl.dump must
+match the Spike dump.
+
+Intentional limits
+------------------
+The shared p/v file uses naturally aligned writable test memory. Misaligned,
+read-only, non-AMO PMA and page-permission exception tests need dedicated trap
+handlers and platform memory attributes; mixing them into this portable
+differential test would make expected behavior EEI/PMA-dependent.
+
+Privilege note
+--------------
+MODE=p/v is physical/virtual memory selection, not M/S/U privilege selection.
+The operation is tested in U mode because AMOOR.W's data result is privilege
+independent. The v-mode run adds translation and page-permission context.
+
+Commands
+--------
+make run TEST=./tests/amoor_w.S MODE=p
+make run TEST=./tests/amoor_w.S MODE=v
+make run_verif TEST=./tests/amoor_w.S MODE=p
+make run_verif TEST=./tests/amoor_w.S MODE=v

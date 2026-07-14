@@ -1,0 +1,57 @@
+MUL DESIGN-VERIFICATION PLAN
+============================
+
+Instruction
+-----------
+MUL rd, rs1, rs2 (M extension 2.0 / Zmmul 1.0)
+
+Architectural rule
+------------------
+Multiply the XLEN-bit values in rs1 and rs2 and write the low XLEN bits of
+the 2*XLEN product to rd. MUL's low half is identical for signed and unsigned
+interpretations. Overflow is discarded and does not trap.
+
+Environment
+-----------
+- RV64 test body: RVTEST_RV64U.
+- Run in MODE=p and MODE=v.
+- MODE=p/v selects physical or virtual-memory harness setup; it is not a
+  machine/supervisor privilege selector.
+- x3/gp is TESTNUM and is never a tested operand. x4/tp is also avoided.
+
+Coverage classes
+----------------
+1. Zero, one, negative-one bit pattern, signed min/max and wraparound.
+2. 32-bit boundary values used in a 64-bit operation.
+3. Alternating, sparse, dense and unrelated 64-bit patterns.
+4. Low-half overflow behavior.
+5. rd=rs1, rd=rs2 and rd=rs1=rs2.
+6. rs1=x0, rs2=x0, both sources x0 and rd=x0.
+7. Register-bank spread including x1 and x31 without using x3/x4.
+8. Immediate source RAW, result RAW, one-cycle gaps, chained MUL and WAW.
+
+Test IDs
+--------
+2-13  value and boundary classes
+14-20 operand overlap and x0 behavior
+21-26 hazards and register-bank placement
+
+Pass criteria
+-------------
+- Every check reaches TEST_PASSFAIL with its expected low 64-bit result.
+- Spike exits successfully.
+- Objdump contains MUL encodings for all operational test labels.
+- C-Class rtl.dump matches the Spike commit dump.
+
+Intentional limits
+------------------
+Enumerating all 2^128 operand pairs is impossible. The suite covers behavioral
+equivalence classes and pipeline-sensitive permutations. MULH/MULHU/MULHSU and
+MULW are different instructions and are outside this file.
+
+Commands
+--------
+make run TEST=./tests/mul.S MODE=p
+make run TEST=./tests/mul.S MODE=v
+make run_verif TEST=./tests/mul.S MODE=p
+make run_verif TEST=./tests/mul.S MODE=v

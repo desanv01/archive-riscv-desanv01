@@ -1,0 +1,55 @@
+FDIV.D DESIGN-VERIFICATION PLAN
+===============================
+
+Instruction
+-----------
+FDIV.D fd, fs1, fs2, rm (D extension 2.2, dependent on F)
+
+Why RVTEST_RV64UF is required
+------------------------------
+D uses the same floating-point register file, fcsr and mstatus.FS state as F.
+RVTEST_RV64UF enables that state and clears fcsr. There is no separate
+RVTEST_RV64UD harness macro in this repository.
+
+Coverage classes
+----------------
+1. Exact positive/negative division and signed zeros.
+2. Finite divided by zero with DZ.
+3. 0/0 and infinity/infinity invalid operations with canonical NaN and NV.
+4. Finite/infinity and infinity/finite.
+5. Quiet and signaling NaNs with exact canonical result and flags.
+6. Inexact 1/3 under RNE, RTZ, RDN, RUP and RMM.
+7. Dynamic rounding mode through frm/dyn.
+8. Exact subnormal, underflow+inexact and overflow+inexact.
+9. fd=fs1 and fd=fs2 overlap.
+10. FP producer/consumer and chained FDIV dependency hazards.
+11. Floating-register spread f0 through f31.
+
+Expected fflags
+---------------
+NX=0x01, UF|NX=0x03, OF|NX=0x05, DZ=0x08, NV=0x10.
+
+Test IDs
+--------
+2-13  exact values and IEEE-754 special values
+14-20 static and dynamic rounding modes
+21-24 subnormal, underflow and overflow
+25-27 overlap and dependency hazards
+
+Pass criteria
+-------------
+Every 64-bit result is compared bit-for-bit through FMV.X.D and every relevant
+fflags result is checked. Spike and C-Class dumps must match.
+
+Intentional limits
+------------------
+All 2^128 operand pairs cannot be enumerated. The plan crosses IEEE-754 class,
+sign, exception and rounding classes. Performance latency is not architectural
+and is not asserted.
+
+Commands
+--------
+make run TEST=./tests/fdiv_d.S MODE=p
+make run TEST=./tests/fdiv_d.S MODE=v
+make run_verif TEST=./tests/fdiv_d.S MODE=p
+make run_verif TEST=./tests/fdiv_d.S MODE=v

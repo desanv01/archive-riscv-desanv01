@@ -145,33 +145,17 @@ compare:
 	@echo "Comparing Spike and RTL Dumps"
 	@echo "-------------------------------------------------------------------------"
 
-	@if [ ! -f "$(OUT_DIR)/$(FILENAME).dump" ]; then \
-		echo "ERROR: Spike dump not found."; \
-		exit 1; \
-	fi
+	@test -f "$(OUT_DIR)/$(FILENAME).dump" || { echo "ERROR: Spike dump not found."; exit 1; }
+	@test -f "$(OUT_DIR)/rtl.dump" || { echo "ERROR: RTL dump not found."; exit 1; }
 
-	@if [ ! -f "$(OUT_DIR)/rtl.dump" ]; then \
-		echo "ERROR: RTL dump not found."; \
-		exit 1; \
-	fi
+	@head -n -$(RTL_SKIP_LINES) $(OUT_DIR)/rtl.dump > $(OUT_DIR)/rtl.trimmed.dump
 
-# 	@echo "Removing last $(RTL_SKIP_LINES) lines from RTL dump"
-	@head -n -$(RTL_SKIP_LINES) $(OUT_DIR)/rtl.dump > $(OUT_DIR)/temp.dump
-	@mv $(OUT_DIR)/temp.dump $(OUT_DIR)/rtl.dump
+	@sed -E 's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' $(OUT_DIR)/$(FILENAME).dump > $(OUT_DIR)/spike.normalized.dump
+	@sed -E 's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' $(OUT_DIR)/rtl.trimmed.dump > $(OUT_DIR)/rtl.normalized.dump
 
-	@diff -iwu \
-	$(OUT_DIR)/$(FILENAME).dump \
-	$(OUT_DIR)/rtl.dump \
-	> $(OUT_DIR)/dump.diff || true
+	@diff -iwu $(OUT_DIR)/spike.normalized.dump $(OUT_DIR)/rtl.normalized.dump > $(OUT_DIR)/dump.diff || true
 
-	@if [ -s "$(OUT_DIR)/dump.diff" ]; then \
-		echo "FAIL : Spike and RTL mismatch"; \
-		echo "See $(OUT_DIR)/dump.diff"; \
-		exit 1; \
-	else \
-		echo "PASS : Spike and RTL match"; \
-		rm -f $(OUT_DIR)/dump.diff; \
-	fi
+	@if [ -s "$(OUT_DIR)/dump.diff" ]; then echo "FAIL : Spike and RTL mismatch"; echo "See $(OUT_DIR)/dump.diff"; exit 1; else echo "PASS : Spike and RTL match"; rm -f $(OUT_DIR)/dump.diff; fi
 # ----------------------------------------------------------------------------
 # Full Verification Flow
 # ----------------------------------------------------------------------------

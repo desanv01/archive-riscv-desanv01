@@ -1,0 +1,447 @@
+
+/home/vsysuser/workspace/riscv-desanv01/riscv_examples/work/p/amoor_w/amoor_w.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text.init:
+
+0000000080000000 <_start>:
+    80000000:	a09d                	j	80000066 <reset_vector>
+    80000002:	0001                	nop
+
+0000000080000004 <trap_vector>:
+    80000004:	34202f73          	csrr	t5,mcause
+    80000008:	4fa1                	li	t6,8
+    8000000a:	03ff0463          	beq	t5,t6,80000032 <write_tohost>
+    8000000e:	4fa5                	li	t6,9
+    80000010:	03ff0163          	beq	t5,t6,80000032 <write_tohost>
+    80000014:	4fad                	li	t6,11
+    80000016:	01ff0e63          	beq	t5,t6,80000032 <write_tohost>
+    8000001a:	00000f13          	li	t5,0
+    8000001e:	000f0363          	beqz	t5,80000024 <trap_vector+0x20>
+    80000022:	8f02                	jr	t5
+    80000024:	34202f73          	csrr	t5,mcause
+    80000028:	000f5363          	bgez	t5,8000002e <handle_exception>
+    8000002c:	a009                	j	8000002e <handle_exception>
+
+000000008000002e <handle_exception>:
+    8000002e:	5391e193          	or	gp,gp,1337
+
+0000000080000032 <write_tohost>:
+    80000032:	00001f17          	auipc	t5,0x1
+    80000036:	fc3f2723          	sw	gp,-50(t5) # 80001000 <tohost>
+    8000003a:	00001f17          	auipc	t5,0x1
+    8000003e:	fc0f2523          	sw	zero,-54(t5) # 80001004 <tohost+0x4>
+
+0000000080000042 <shakti_end>:
+    80000042:	0000100f          	fence.i
+    80000046:	00020fb7          	lui	t6,0x20
+    8000004a:	00002f17          	auipc	t5,0x2
+    8000004e:	fb6f0f13          	add	t5,t5,-74 # 80002000 <begin_signature>
+    80000052:	01efa023          	sw	t5,0(t6) # 20000 <_start-0x7ffe0000>
+    80000056:	00002f17          	auipc	t5,0x2
+    8000005a:	fbaf0f13          	add	t5,t5,-70 # 80002010 <_end>
+    8000005e:	01efa423          	sw	t5,8(t6)
+    80000062:	01efa623          	sw	t5,12(t6)
+
+0000000080000066 <reset_vector>:
+    80000066:	4081                	li	ra,0
+    80000068:	4101                	li	sp,0
+    8000006a:	4181                	li	gp,0
+    8000006c:	4201                	li	tp,0
+    8000006e:	4281                	li	t0,0
+    80000070:	4301                	li	t1,0
+    80000072:	4381                	li	t2,0
+    80000074:	4401                	li	s0,0
+    80000076:	4481                	li	s1,0
+    80000078:	4501                	li	a0,0
+    8000007a:	4581                	li	a1,0
+    8000007c:	4601                	li	a2,0
+    8000007e:	4681                	li	a3,0
+    80000080:	4701                	li	a4,0
+    80000082:	4781                	li	a5,0
+    80000084:	4801                	li	a6,0
+    80000086:	4881                	li	a7,0
+    80000088:	4901                	li	s2,0
+    8000008a:	4981                	li	s3,0
+    8000008c:	4a01                	li	s4,0
+    8000008e:	4a81                	li	s5,0
+    80000090:	4b01                	li	s6,0
+    80000092:	4b81                	li	s7,0
+    80000094:	4c01                	li	s8,0
+    80000096:	4c81                	li	s9,0
+    80000098:	4d01                	li	s10,0
+    8000009a:	4d81                	li	s11,0
+    8000009c:	4e01                	li	t3,0
+    8000009e:	4e81                	li	t4,0
+    800000a0:	4f01                	li	t5,0
+    800000a2:	4f81                	li	t6,0
+    800000a4:	f1402573          	csrr	a0,mhartid
+    800000a8:	e101                	bnez	a0,800000a8 <reset_vector+0x42>
+    800000aa:	00000297          	auipc	t0,0x0
+    800000ae:	01228293          	add	t0,t0,18 # 800000bc <reset_vector+0x56>
+    800000b2:	30529073          	csrw	mtvec,t0
+    800000b6:	74445073          	csrw	0x744,8
+    800000ba:	0001                	nop
+    800000bc:	00000297          	auipc	t0,0x0
+    800000c0:	01028293          	add	t0,t0,16 # 800000cc <reset_vector+0x66>
+    800000c4:	30529073          	csrw	mtvec,t0
+    800000c8:	18005073          	csrw	satp,0
+    800000cc:	30405073          	csrw	mie,0
+    800000d0:	00000297          	auipc	t0,0x0
+    800000d4:	01428293          	add	t0,t0,20 # 800000e4 <reset_vector+0x7e>
+    800000d8:	30529073          	csrw	mtvec,t0
+    800000dc:	30205073          	csrw	medeleg,0
+    800000e0:	30305073          	csrw	mideleg,0
+    800000e4:	4181                	li	gp,0
+    800000e6:	00000297          	auipc	t0,0x0
+    800000ea:	f1e28293          	add	t0,t0,-226 # 80000004 <trap_vector>
+    800000ee:	30529073          	csrw	mtvec,t0
+    800000f2:	4505                	li	a0,1
+    800000f4:	057e                	sll	a0,a0,0x1f
+    800000f6:	00055a63          	bgez	a0,8000010a <reset_vector+0xa4>
+    800000fa:	0ff0000f          	fence
+    800000fe:	4185                	li	gp,1
+    80000100:	05d00893          	li	a7,93
+    80000104:	4501                	li	a0,0
+    80000106:	00000073          	ecall
+    8000010a:	00000293          	li	t0,0
+    8000010e:	00028963          	beqz	t0,80000120 <reset_vector+0xba>
+    80000112:	10529073          	csrw	stvec,t0
+    80000116:	62ad                	lui	t0,0xb
+    80000118:	1092829b          	addw	t0,t0,265 # b109 <_start-0x7fff4ef7>
+    8000011c:	30229073          	csrw	medeleg,t0
+    80000120:	30005073          	csrw	mstatus,0
+    80000124:	00000297          	auipc	t0,0x0
+    80000128:	01428293          	add	t0,t0,20 # 80000138 <amoor_w_zero_zero>
+    8000012c:	34129073          	csrw	mepc,t0
+    80000130:	f1402573          	csrr	a0,mhartid
+    80000134:	30200073          	mret
+
+0000000080000138 <amoor_w_zero_zero>:
+    80000138:	4189                	li	gp,2
+    8000013a:	00002517          	auipc	a0,0x2
+    8000013e:	ec650513          	add	a0,a0,-314 # 80002000 <begin_signature>
+    80000142:	4581                	li	a1,0
+    80000144:	c10c                	sw	a1,0(a0)
+    80000146:	4601                	li	a2,0
+    80000148:	40c526af          	amoor.w	a3,a2,(a0)
+    8000014c:	4701                	li	a4,0
+    8000014e:	30e69763          	bne	a3,a4,8000045c <fail>
+    80000152:	00056783          	lwu	a5,0(a0)
+    80000156:	4801                	li	a6,0
+    80000158:	31079263          	bne	a5,a6,8000045c <fail>
+
+000000008000015c <amoor_w_zero_ones>:
+    8000015c:	418d                	li	gp,3
+    8000015e:	00002517          	auipc	a0,0x2
+    80000162:	ea250513          	add	a0,a0,-350 # 80002000 <begin_signature>
+    80000166:	4581                	li	a1,0
+    80000168:	c10c                	sw	a1,0(a0)
+    8000016a:	0010061b          	addw	a2,zero,1
+    8000016e:	1602                	sll	a2,a2,0x20
+    80000170:	167d                	add	a2,a2,-1
+    80000172:	40c526af          	amoor.w	a3,a2,(a0)
+    80000176:	4701                	li	a4,0
+    80000178:	2ee69263          	bne	a3,a4,8000045c <fail>
+    8000017c:	00056783          	lwu	a5,0(a0)
+    80000180:	0010081b          	addw	a6,zero,1
+    80000184:	1802                	sll	a6,a6,0x20
+    80000186:	187d                	add	a6,a6,-1
+    80000188:	2d079a63          	bne	a5,a6,8000045c <fail>
+
+000000008000018c <amoor_w_ones_zero_signextend>:
+    8000018c:	4191                	li	gp,4
+    8000018e:	00002517          	auipc	a0,0x2
+    80000192:	e7250513          	add	a0,a0,-398 # 80002000 <begin_signature>
+    80000196:	0010059b          	addw	a1,zero,1
+    8000019a:	1582                	sll	a1,a1,0x20
+    8000019c:	15fd                	add	a1,a1,-1
+    8000019e:	c10c                	sw	a1,0(a0)
+    800001a0:	4601                	li	a2,0
+    800001a2:	40c526af          	amoor.w	a3,a2,(a0)
+    800001a6:	577d                	li	a4,-1
+    800001a8:	2ae69a63          	bne	a3,a4,8000045c <fail>
+    800001ac:	00056783          	lwu	a5,0(a0)
+    800001b0:	0010081b          	addw	a6,zero,1
+    800001b4:	1802                	sll	a6,a6,0x20
+    800001b6:	187d                	add	a6,a6,-1
+    800001b8:	2b079263          	bne	a5,a6,8000045c <fail>
+
+00000000800001bc <amoor_w_alternating>:
+    800001bc:	4195                	li	gp,5
+    800001be:	00002517          	auipc	a0,0x2
+    800001c2:	e4250513          	add	a0,a0,-446 # 80002000 <begin_signature>
+    800001c6:	000ab5b7          	lui	a1,0xab
+    800001ca:	aab5859b          	addw	a1,a1,-1365 # aaaab <_start-0x7ff55555>
+    800001ce:	05b2                	sll	a1,a1,0xc
+    800001d0:	aaa58593          	add	a1,a1,-1366
+    800001d4:	c10c                	sw	a1,0(a0)
+    800001d6:	55555637          	lui	a2,0x55555
+    800001da:	5556061b          	addw	a2,a2,1365 # 55555555 <_start-0x2aaaaaab>
+    800001de:	40c526af          	amoor.w	a3,a2,(a0)
+    800001e2:	aaaab737          	lui	a4,0xaaaab
+    800001e6:	aaa7071b          	addw	a4,a4,-1366 # ffffffffaaaaaaaa <_end+0xffffffff2aaa8a9a>
+    800001ea:	26e69963          	bne	a3,a4,8000045c <fail>
+    800001ee:	00056783          	lwu	a5,0(a0)
+    800001f2:	0010081b          	addw	a6,zero,1
+    800001f6:	1802                	sll	a6,a6,0x20
+    800001f8:	187d                	add	a6,a6,-1
+    800001fa:	27079163          	bne	a5,a6,8000045c <fail>
+
+00000000800001fe <amoor_w_sparse_union>:
+    800001fe:	4199                	li	gp,6
+    80000200:	00002517          	auipc	a0,0x2
+    80000204:	e0050513          	add	a0,a0,-512 # 80002000 <begin_signature>
+    80000208:	0010059b          	addw	a1,zero,1
+    8000020c:	05fe                	sll	a1,a1,0x1f
+    8000020e:	0585                	add	a1,a1,1
+    80000210:	c10c                	sw	a1,0(a0)
+    80000212:	6641                	lui	a2,0x10
+    80000214:	2641                	addw	a2,a2,16 # 10010 <_start-0x7ffefff0>
+    80000216:	40c526af          	amoor.w	a3,a2,(a0)
+    8000021a:	80000737          	lui	a4,0x80000
+    8000021e:	2705                	addw	a4,a4,1 # ffffffff80000001 <_end+0xfffffffeffffdff1>
+    80000220:	22e69e63          	bne	a3,a4,8000045c <fail>
+    80000224:	00056783          	lwu	a5,0(a0)
+    80000228:	6821                	lui	a6,0x8
+    8000022a:	2805                	addw	a6,a6,1 # 8001 <_start-0x7fff7fff>
+    8000022c:	0842                	sll	a6,a6,0x10
+    8000022e:	0845                	add	a6,a6,17
+    80000230:	23079663          	bne	a5,a6,8000045c <fail>
+
+0000000080000234 <amoor_w_upper_rs2_ignored>:
+    80000234:	419d                	li	gp,7
+    80000236:	00002517          	auipc	a0,0x2
+    8000023a:	dca50513          	add	a0,a0,-566 # 80002000 <begin_signature>
+    8000023e:	4581                	li	a1,0
+    80000240:	c10c                	sw	a1,0(a0)
+    80000242:	deadc637          	lui	a2,0xdeadc
+    80000246:	eef6061b          	addw	a2,a2,-273 # ffffffffdeadbeef <_end+0xffffffff5ead9edf>
+    8000024a:	1602                	sll	a2,a2,0x20
+    8000024c:	0605                	add	a2,a2,1
+    8000024e:	40c526af          	amoor.w	a3,a2,(a0)
+    80000252:	4701                	li	a4,0
+    80000254:	20e69463          	bne	a3,a4,8000045c <fail>
+    80000258:	00056783          	lwu	a5,0(a0)
+    8000025c:	4805                	li	a6,1
+    8000025e:	1f079f63          	bne	a5,a6,8000045c <fail>
+
+0000000080000262 <amoor_w_aq>:
+    80000262:	41a1                	li	gp,8
+    80000264:	00002517          	auipc	a0,0x2
+    80000268:	d9c50513          	add	a0,a0,-612 # 80002000 <begin_signature>
+    8000026c:	010105b7          	lui	a1,0x1010
+    80000270:	1015859b          	addw	a1,a1,257 # 1010101 <_start-0x7efefeff>
+    80000274:	c10c                	sw	a1,0(a0)
+    80000276:	10101637          	lui	a2,0x10101
+    8000027a:	2641                	addw	a2,a2,16 # 10101010 <_start-0x6fefeff0>
+    8000027c:	44c526af          	amoor.w.aq	a3,a2,(a0)
+    80000280:	01010737          	lui	a4,0x1010
+    80000284:	1017071b          	addw	a4,a4,257 # 1010101 <_start-0x7efefeff>
+    80000288:	1ce69a63          	bne	a3,a4,8000045c <fail>
+    8000028c:	00056783          	lwu	a5,0(a0)
+    80000290:	11111837          	lui	a6,0x11111
+    80000294:	1118081b          	addw	a6,a6,273 # 11111111 <_start-0x6eeeeeef>
+    80000298:	1d079263          	bne	a5,a6,8000045c <fail>
+
+000000008000029c <amoor_w_rl>:
+    8000029c:	41a5                	li	gp,9
+    8000029e:	00002517          	auipc	a0,0x2
+    800002a2:	d6250513          	add	a0,a0,-670 # 80002000 <begin_signature>
+    800002a6:	0f0f15b7          	lui	a1,0xf0f1
+    800002aa:	f0f5859b          	addw	a1,a1,-241 # f0f0f0f <_start-0x70f0f0f1>
+    800002ae:	c10c                	sw	a1,0(a0)
+    800002b0:	00f0061b          	addw	a2,zero,15
+    800002b4:	0672                	sll	a2,a2,0x1c
+    800002b6:	42c526af          	amoor.w.rl	a3,a2,(a0)
+    800002ba:	0f0f1737          	lui	a4,0xf0f1
+    800002be:	f0f7071b          	addw	a4,a4,-241 # f0f0f0f <_start-0x70f0f0f1>
+    800002c2:	18e69d63          	bne	a3,a4,8000045c <fail>
+    800002c6:	00056783          	lwu	a5,0(a0)
+    800002ca:	000ff837          	lui	a6,0xff
+    800002ce:	0f18081b          	addw	a6,a6,241 # ff0f1 <_start-0x7ff00f0f>
+    800002d2:	0832                	sll	a6,a6,0xc
+    800002d4:	f0f80813          	add	a6,a6,-241
+    800002d8:	19079263          	bne	a5,a6,8000045c <fail>
+
+00000000800002dc <amoor_w_aqrl>:
+    800002dc:	41a9                	li	gp,10
+    800002de:	00002517          	auipc	a0,0x2
+    800002e2:	d2250513          	add	a0,a0,-734 # 80002000 <begin_signature>
+    800002e6:	123405b7          	lui	a1,0x12340
+    800002ea:	c10c                	sw	a1,0(a0)
+    800002ec:	6615                	lui	a2,0x5
+    800002ee:	6786061b          	addw	a2,a2,1656 # 5678 <_start-0x7fffa988>
+    800002f2:	46c526af          	amoor.w.aqrl	a3,a2,(a0)
+    800002f6:	12340737          	lui	a4,0x12340
+    800002fa:	16e69163          	bne	a3,a4,8000045c <fail>
+    800002fe:	00056783          	lwu	a5,0(a0)
+    80000302:	12345837          	lui	a6,0x12345
+    80000306:	6788081b          	addw	a6,a6,1656 # 12345678 <_start-0x6dcba988>
+    8000030a:	15079963          	bne	a5,a6,8000045c <fail>
+
+000000008000030e <amoor_w_rd_equals_rs2>:
+    8000030e:	41ad                	li	gp,11
+    80000310:	00002517          	auipc	a0,0x2
+    80000314:	cf050513          	add	a0,a0,-784 # 80002000 <begin_signature>
+    80000318:	65bd                	lui	a1,0xf
+    8000031a:	c10c                	sw	a1,0(a0)
+    8000031c:	0ff00613          	li	a2,255
+    80000320:	40c5262f          	amoor.w	a2,a2,(a0)
+    80000324:	673d                	lui	a4,0xf
+    80000326:	12e61b63          	bne	a2,a4,8000045c <fail>
+    8000032a:	00056783          	lwu	a5,0(a0)
+    8000032e:	683d                	lui	a6,0xf
+    80000330:	0ff8081b          	addw	a6,a6,255 # f0ff <_start-0x7fff0f01>
+    80000334:	13079463          	bne	a5,a6,8000045c <fail>
+
+0000000080000338 <amoor_w_rd_equals_rs1>:
+    80000338:	41b1                	li	gp,12
+    8000033a:	00002517          	auipc	a0,0x2
+    8000033e:	cc650513          	add	a0,a0,-826 # 80002000 <begin_signature>
+    80000342:	88aa                	mv	a7,a0
+    80000344:	0010059b          	addw	a1,zero,1
+    80000348:	05fe                	sll	a1,a1,0x1f
+    8000034a:	c10c                	sw	a1,0(a0)
+    8000034c:	4605                	li	a2,1
+    8000034e:	40c5252f          	amoor.w	a0,a2,(a0)
+    80000352:	80000737          	lui	a4,0x80000
+    80000356:	10e51363          	bne	a0,a4,8000045c <fail>
+    8000035a:	0008e783          	lwu	a5,0(a7)
+    8000035e:	0010081b          	addw	a6,zero,1
+    80000362:	087e                	sll	a6,a6,0x1f
+    80000364:	0805                	add	a6,a6,1
+    80000366:	0f079b63          	bne	a5,a6,8000045c <fail>
+
+000000008000036a <amoor_w_rs2_zero>:
+    8000036a:	41b5                	li	gp,13
+    8000036c:	00002517          	auipc	a0,0x2
+    80000370:	c9450513          	add	a0,a0,-876 # 80002000 <begin_signature>
+    80000374:	0008a5b7          	lui	a1,0x8a
+    80000378:	abd5859b          	addw	a1,a1,-1347 # 89abd <_start-0x7ff76543>
+    8000037c:	05b2                	sll	a1,a1,0xc
+    8000037e:	def58593          	add	a1,a1,-529
+    80000382:	c10c                	sw	a1,0(a0)
+    80000384:	400526af          	amoor.w	a3,zero,(a0)
+    80000388:	89abd737          	lui	a4,0x89abd
+    8000038c:	def7071b          	addw	a4,a4,-529 # ffffffff89abcdef <_end+0xffffffff09abaddf>
+    80000390:	0ce69663          	bne	a3,a4,8000045c <fail>
+    80000394:	00056783          	lwu	a5,0(a0)
+    80000398:	0008a837          	lui	a6,0x8a
+    8000039c:	abd8081b          	addw	a6,a6,-1347 # 89abd <_start-0x7ff76543>
+    800003a0:	0832                	sll	a6,a6,0xc
+    800003a2:	def80813          	add	a6,a6,-529
+    800003a6:	0b079b63          	bne	a5,a6,8000045c <fail>
+
+00000000800003aa <amoor_w_rd_zero>:
+    800003aa:	41b9                	li	gp,14
+    800003ac:	00002517          	auipc	a0,0x2
+    800003b0:	c5450513          	add	a0,a0,-940 # 80002000 <begin_signature>
+    800003b4:	0f000593          	li	a1,240
+    800003b8:	c10c                	sw	a1,0(a0)
+    800003ba:	6605                	lui	a2,0x1
+    800003bc:	f006061b          	addw	a2,a2,-256 # f00 <_start-0x7ffff100>
+    800003c0:	40c5202f          	amoor.w	zero,a2,(a0)
+    800003c4:	00056783          	lwu	a5,0(a0)
+    800003c8:	6805                	lui	a6,0x1
+    800003ca:	3841                	addw	a6,a6,-16 # ff0 <_start-0x7ffff010>
+    800003cc:	09079863          	bne	a5,a6,8000045c <fail>
+
+00000000800003d0 <amoor_w_address_raw_no_gap>:
+    800003d0:	41bd                	li	gp,15
+    800003d2:	463d                	li	a2,15
+    800003d4:	00002517          	auipc	a0,0x2
+    800003d8:	c2c50513          	add	a0,a0,-980 # 80002000 <begin_signature>
+    800003dc:	40c526af          	amoor.w	a3,a2,(a0)
+    800003e0:	00056783          	lwu	a5,0(a0)
+    800003e4:	00f6e813          	or	a6,a3,15
+    800003e8:	2681                	sext.w	a3,a3
+    800003ea:	07079963          	bne	a5,a6,8000045c <fail>
+
+00000000800003ee <amoor_w_source_raw_no_gap>:
+    800003ee:	41c1                	li	gp,16
+    800003f0:	00002517          	auipc	a0,0x2
+    800003f4:	c1050513          	add	a0,a0,-1008 # 80002000 <begin_signature>
+    800003f8:	00ff05b7          	lui	a1,0xff0
+    800003fc:	c10c                	sw	a1,0(a0)
+    800003fe:	6641                	lui	a2,0x10
+    80000400:	f006061b          	addw	a2,a2,-256 # ff00 <_start-0x7fff0100>
+    80000404:	40c526af          	amoor.w	a3,a2,(a0)
+    80000408:	00168713          	add	a4,a3,1
+    8000040c:	00ff0837          	lui	a6,0xff0
+    80000410:	2805                	addw	a6,a6,1 # ff0001 <_start-0x7f00ffff>
+    80000412:	05071563          	bne	a4,a6,8000045c <fail>
+    80000416:	00056783          	lwu	a5,0(a0)
+    8000041a:	01000837          	lui	a6,0x1000
+    8000041e:	f008081b          	addw	a6,a6,-256 # ffff00 <_start-0x7f000100>
+    80000422:	03079d63          	bne	a5,a6,8000045c <fail>
+
+0000000080000426 <amoor_w_back_to_back>:
+    80000426:	41c5                	li	gp,17
+    80000428:	00002517          	auipc	a0,0x2
+    8000042c:	bd850513          	add	a0,a0,-1064 # 80002000 <begin_signature>
+    80000430:	00052023          	sw	zero,0(a0)
+    80000434:	45bd                	li	a1,15
+    80000436:	0f000613          	li	a2,240
+    8000043a:	40b5292f          	amoor.w	s2,a1,(a0)
+    8000043e:	40c529af          	amoor.w	s3,a2,(a0)
+    80000442:	00091d63          	bnez	s2,8000045c <fail>
+    80000446:	473d                	li	a4,15
+    80000448:	00e99a63          	bne	s3,a4,8000045c <fail>
+    8000044c:	00056783          	lwu	a5,0(a0)
+    80000450:	0ff00813          	li	a6,255
+    80000454:	01079463          	bne	a5,a6,8000045c <fail>
+    80000458:	00301e63          	bne	zero,gp,80000474 <pass>
+
+000000008000045c <fail>:
+    8000045c:	0ff0000f          	fence
+    80000460:	00018063          	beqz	gp,80000460 <fail+0x4>
+    80000464:	0186                	sll	gp,gp,0x1
+    80000466:	0011e193          	or	gp,gp,1
+    8000046a:	05d00893          	li	a7,93
+    8000046e:	850e                	mv	a0,gp
+    80000470:	00000073          	ecall
+
+0000000080000474 <pass>:
+    80000474:	0ff0000f          	fence
+    80000478:	4185                	li	gp,1
+    8000047a:	05d00893          	li	a7,93
+    8000047e:	4501                	li	a0,0
+    80000480:	00000073          	ecall
+    80000484:	0000                	unimp
+    80000486:	0000                	unimp
+    80000488:	0000                	unimp
+    8000048a:	0000                	unimp
+    8000048c:	0000                	unimp
+    8000048e:	0000                	unimp
+    80000490:	0000                	unimp
+    80000492:	0000                	unimp
+    80000494:	0000                	unimp
+    80000496:	0000                	unimp
+    80000498:	0000                	unimp
+    8000049a:	0000                	unimp
+    8000049c:	0000                	unimp
+    8000049e:	0000                	unimp
+    800004a0:	0000                	unimp
+    800004a2:	0000                	unimp
+    800004a4:	0000                	unimp
+    800004a6:	0000                	unimp
+    800004a8:	0000                	unimp
+    800004aa:	0000                	unimp
+    800004ac:	0000                	unimp
+    800004ae:	0000                	unimp
+    800004b0:	0000                	unimp
+    800004b2:	0000                	unimp
+    800004b4:	0000                	unimp
+
+Disassembly of section .data:
+
+0000000080002000 <begin_signature>:
+    80002000:	0000                	unimp
+    80002002:	0000                	unimp
+    80002004:	0000                	unimp
+    80002006:	0000                	unimp
+    80002008:	0000                	unimp
+    8000200a:	0000                	unimp
+    8000200c:	0000                	unimp
+    8000200e:	0000                	unimp

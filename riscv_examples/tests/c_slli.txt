@@ -1,0 +1,46 @@
+C.SLLI DESIGN-VERIFICATION PLAN
+===============================
+
+Instruction
+-----------
+C.SLLI rd, shamt (C extension 2.0, 16-bit CI encoding)
+
+Architectural rule
+------------------
+Shift rd left logically by shamt[5:0] and write the low XLEN bits back to the
+same register. It expands architecturally to SLLI rd, rd, shamt[5:0]. On RV64,
+shift amounts 1-63 are operational. shamt=0 or rd=x0 code points are HINTs.
+
+Coverage classes
+----------------
+1. Zero, one, all-one, MSB-only and mixed patterns.
+2. Shift amounts 1, 2, 3, 4, 5, 17, 31, 32 and 63.
+3. Bit loss at the XLEN boundary.
+4. Register spread including x1 and x31, excluding x3/x4.
+5. Inherent rd=rs1 overlap.
+6. Producer, consumer, one-gap and back-to-back shift hazards.
+7. Raw 16-bit HINT encodings for shamt=0 and rd=x0.
+8. Objdump confirmation that operational cases are 16-bit C.SLLI.
+
+Test IDs
+--------
+2-13  values, shift boundaries and register spread
+14-16 hazards
+17-18 HINT encodings
+
+Pass criteria
+-------------
+All result checks pass, Spike accepts the HINTs, and disassembly shows c.slli
+for operational labels. C-Class and Spike dumps must match.
+
+Intentional limits
+------------------
+RV32-only restrictions cannot be exercised because this harness is RV64. The
+RV32 shamt[5]=1 custom-extension space requires a separate RV32 build.
+
+Commands
+--------
+make run TEST=./tests/c_slli.S MODE=p
+make run TEST=./tests/c_slli.S MODE=v
+make run_verif TEST=./tests/c_slli.S MODE=p
+make run_verif TEST=./tests/c_slli.S MODE=v

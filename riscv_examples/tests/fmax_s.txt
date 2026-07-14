@@ -1,0 +1,56 @@
+FMAX.S DESIGN-VERIFICATION PLAN
+===============================
+
+Instruction
+-----------
+FMAX.S fd, fs1, fs2 (F extension 2.2)
+
+Why RVTEST_RV64UF is required
+------------------------------
+Floating-point instructions are illegal when floating-point architectural
+state is disabled. RVTEST_RV64UF enables mstatus.FS and clears fcsr before the
+test body. The U means the test executes in user privilege; F means FP state is
+enabled. This is required even though FMAX.S itself has no rounding-mode field.
+
+Architectural rule
+------------------
+Return the larger single-precision operand. -0.0 is less than +0.0. One NaN
+returns the numeric operand; two NaNs return canonical NaN. A signaling NaN
+sets fflags.NV even when the numeric operand is returned.
+
+Coverage classes
+----------------
+1. Positive and negative ordered operands in both operand orders.
+2. +0.0 versus -0.0 in both operand orders.
+3. Positive/negative infinity and largest finite values.
+4. Positive and negative subnormals.
+5. Quiet NaN left/right/both and noncanonical payloads.
+6. Signaling NaN left/right/both with exact NV checks.
+7. fd=fs1 and fd=fs2 overlap.
+8. Floating-register spread f0 through f31.
+9. FP producer-to-FMAX and FMAX-to-consumer RAW hazards with 0/1 gaps.
+10. Chained FMAX dependency.
+
+Test IDs
+--------
+2-10  ordered, zero, infinity and subnormal values
+11-16 NaN behavior and fflags.NV
+17-18 destination/source overlap
+19-21 hazards and chaining
+
+Pass criteria
+-------------
+Result bits are compared exactly through FMV.X.W and fflags are checked after
+each exception-sensitive case. Spike and C-Class commit dumps must match.
+
+Intentional limits
+------------------
+There are too many 32-bit operand pairs to enumerate. Coverage is by IEEE-754
+class and operand permutation. FMAX.S has no rounding-mode permutation.
+
+Commands
+--------
+make run TEST=./tests/fmax_s.S MODE=p
+make run TEST=./tests/fmax_s.S MODE=v
+make run_verif TEST=./tests/fmax_s.S MODE=p
+make run_verif TEST=./tests/fmax_s.S MODE=v
