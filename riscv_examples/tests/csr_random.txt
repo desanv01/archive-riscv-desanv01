@@ -1,0 +1,83 @@
+CSR Random / Exhaustive-Safe Verification Plan
+================================================
+
+Scope
+-----
+Verify the RV64 Zicsr instruction family in machine mode:
+
+* CSRRW  - atomic read/write
+* CSRRS  - atomic read/set
+* CSRRC  - atomic read/clear
+* CSRRWI - immediate read/write
+* CSRRSI - immediate read/set
+* CSRRCI - immediate read/clear
+
+The test uses RVTEST_RV64M because machine mode can access implemented
+machine, supervisor, and user CSRs. MODE=p is required; MODE selects the
+repository environment, not the architectural privilege level.
+
+Generated Files
+---------------
+* generate_csr_random_assembly.py: generator and complete encoding model
+* analyze_csr_map.py: legal/illegal map outcome analyzer
+* csr_random.S: deterministic semantic regression
+* csr_map.S: all-address, non-writing CSR discovery test
+* csr_msip.S: machine software interrupt test from the whiteboard
+
+Complete Instruction-Field Space
+--------------------------------
+There are 4,096 CSR addresses, 32 rd encodings, and 32 rs1/uimm encodings.
+
+* Register forms: 4,096 x 3 x 32 x 32 = 12,582,912
+* Immediate forms: 4,096 x 3 x 32 x 32 = 12,582,912
+* Total: 25,165,824 instruction-field encodings
+
+The optional gzip CSV enumerates every encoding. Register-form data values add
+2^64 possible source values per instruction, so no finite test can literally
+execute every architectural state. The suite instead exhausts encoded fields
+and executes all meaningful outcome classes safely.
+
+csr_random.S Coverage
+---------------------
+1. All six instruction semantics on mscratch.
+2. Write, set, and clear with known old/new values.
+3. rd=x0 read suppression for CSRRW and CSRRWI.
+4. rs1=x0 and uimm=0 write suppression for set/clear forms.
+5. rd=rs1 aliasing.
+6. Immediate values 0 and 31.
+7. Literal illegal instruction and write to read-only mvendorid.
+8. Trap recovery checks mcause=2 and increments mepc by four before mret.
+9. Original mscratch value is restored before PASS.
+
+csr_map.S Coverage
+------------------
+Every CSR address 0x000 through 0xfff is executed with all four non-writing
+read forms: CSRRS/CSRRC with rs1=x0 and CSRRSI/CSRRCI with uimm=0. This gives
+16,384 probes without altering unknown CSRs. The analyzer classifies each
+probe as legal or illegal from the commit dumps and compares Spike with RTL.
+
+Writing every CSR is intentionally not executed: writes can disable extensions
+through misa, redirect traps through mtvec, alter mstatus/mie, change counters,
+or lock PMP. Safe write semantics are verified on mscratch; prohibited writes
+are verified through controlled illegal-instruction traps.
+
+csr_msip.S Coverage
+-------------------
+The whiteboard interrupt flow is separate because MSIP is memory-mapped at
+0x02000000, not a CSR. The test sets mie.MSIE and mstatus.MIE, writes MSIP,
+checks interrupt mcause=0x8000000000000003, clears MSIP, and returns with mret.
+
+Verified Local Results
+----------------------
+* csr_random.S: Spike and C-Class self-check PASS; normalized strict dumps PASS.
+* csr_map.S: both self-check PASS. The analyzer found 16,384 probes, 396 outcome
+  differences across 99 CSR addresses. First: CSR 0x3a4 is legal in the generic
+  Spike model and illegal in this C-Class build. Optional CSR implementation
+  differences are diagnostic findings, not automatically DUT bugs.
+* csr_msip.S: Spike and C-Class self-check PASS. Strict dumps differ because
+  asynchronous interrupt latency differs; Spike waited thousands of branches
+  while C-Class took the interrupt after two.
+
+The Makefile normalizer removes only redundant RTL log annotations for CSRRC
+and CSRRCI with a zero mask, because those encodings architecturally perform no
+CSR write. Architectural state and all other commit effects remain compared.

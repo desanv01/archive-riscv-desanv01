@@ -1,38 +1,30 @@
 # Makefile for compiling and verifying RISC-V tests on Spike and DUT
-
 ifndef TEST
 $(error TEST is not set. Example: make run_verif TEST=./tests/add.S MODE=v)
 endif
-
 # -----------------------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------------------
-
 MODE ?= p
-
 FILENAME  := $(basename $(notdir $(TEST)))
 TEST_HOME := $(CURDIR)
 OUT_DIR   := $(TEST_HOME)/work/$(MODE)/$(FILENAME)
 
 # -----------------------------------------------------------------------------
-# Tools and timeouts
+# Tools
 # -----------------------------------------------------------------------------
-
 GCC       := riscv64-unknown-elf-gcc
 OBJDUMP   := riscv64-unknown-elf-objdump
 SPIKE     := spike
-
-# Small tests finish quickly, but exhaustive tests generate very large dumps.
 SPIKE_TIMEOUT ?= 180s
-RTL_TIMEOUT   ?= 900s
-
-TIMEOUT := timeout --foreground $(SPIKE_TIMEOUT)
+TIMEOUT   := timeout --foreground $(SPIKE_TIMEOUT)
+RTL_TIMEOUT ?= 900s
 
 # -----------------------------------------------------------------------------
 # Mode Selection
 #
-# MODE=p -> normal physical-memory environment
-# MODE=v -> virtual-memory environment
+# MODE=p -> normal physical mode
+# MODE=v -> virtual memory mode
 # -----------------------------------------------------------------------------
 
 ifeq ($(MODE),v)
@@ -42,7 +34,6 @@ RTL_SKIP_LINES := 4
 endif
 
 ifeq ($(MODE),v)
-
 CFLAGS := -march=rv64imafdczicsr_zifencei \
           -mabi=lp64 \
           -static \
@@ -61,7 +52,6 @@ EXTRA_FILES := $(TEST_HOME)/env/v/entry.S \
                $(TEST_HOME)/env/v/*.c
 
 else
-
 CFLAGS := -march=rv64imafdczicsr_zifencei \
           -mabi=lp64 \
           -static \
@@ -76,10 +66,9 @@ CFLAGS := -march=rv64imafdczicsr_zifencei \
           -T$(TEST_HOME)/env/link.ld
 
 EXTRA_FILES :=
-
 endif
 
-.PHONY: all run disasm spike run_dut compare run_verif clean
+.PHONY: all run disasm spike run_dut compare check_self run_verif run_verif_self clean
 
 all: run
 
@@ -88,13 +77,14 @@ all: run
 # -----------------------------------------------------------------------------
 
 run: $(OUT_DIR)/$(FILENAME).elf
-	@$(MAKE) --no-print-directory disasm MODE=$(MODE)
-	@$(MAKE) --no-print-directory spike MODE=$(MODE)
+	@$(MAKE) --no-print-directory disasm
+	@$(MAKE) --no-print-directory spike
 	@echo "-------------------------------------------------------------------------"
 	@echo "DONE"
 	@echo "-------------------------------------------------------------------------"
 
 $(OUT_DIR)/$(FILENAME).elf: $(TEST)
+
 	@echo "-------------------------------------------------------------------------"
 	@echo "Compiling $(TEST)"
 	@echo "MODE = $(MODE)"
@@ -102,9 +92,9 @@ $(OUT_DIR)/$(FILENAME).elf: $(TEST)
 	mkdir -p $(OUT_DIR)
 	rm -rf $(OUT_DIR)/*
 	$(GCC) $(CFLAGS) \
-		$(EXTRA_FILES) \
-		$< \
-		-o $@
+	$(EXTRA_FILES) \
+	$< \
+	-o $@
 
 # -----------------------------------------------------------------------------
 # Disassembly
@@ -115,10 +105,7 @@ disasm: $(OUT_DIR)/$(FILENAME).elf
 	@echo "Disassembly Generation"
 	@echo "-------------------------------------------------------------------------"
 	$(OBJDUMP) --disassemble-all --disassemble-zeroes \
-		--section=.text \
-		--section=.text.startup \
-		--section=.text.init \
-		--section=.data \
+		--section=.text --section=.text.startup --section=.text.init --section=.data \
 		$< > $(OUT_DIR)/$(FILENAME).disass
 
 # -----------------------------------------------------------------------------
@@ -128,83 +115,63 @@ disasm: $(OUT_DIR)/$(FILENAME).elf
 spike: $(OUT_DIR)/$(FILENAME).elf
 	@echo "-------------------------------------------------------------------------"
 	@echo "Running on Spike"
-	@echo "Spike timeout = $(SPIKE_TIMEOUT)"
 	@echo "-------------------------------------------------------------------------"
-	$(TIMEOUT) $(SPIKE) \
-		--log-commits \
-		--log $(OUT_DIR)/$(FILENAME).dump \
-		--isa=rv64gcZicsr_Zifencei \
-		+signature=spike_signature.txt \
-		+signature-granularity=4 \
-		$<
+	$(TIMEOUT) $(SPIKE) --log-commits --log $(OUT_DIR)/$(FILENAME).dump \
+		--isa=rv64gcZicsr_Zifencei +signature=spike_signature.txt +signature-granularity=4 $<
 
-# -----------------------------------------------------------------------------
-# C-Class RTL Run
-# -----------------------------------------------------------------------------
 
 run_dut: $(OUT_DIR)/$(FILENAME).elf
 	@if [ -z "$(DESIGN_HOME)" ]; then \
-		echo "ERROR: DESIGN_HOME is not set."; \
-		echo 'Run: export DESIGN_HOME="$$PWD/../cclass_bin"'; \
-		exit 1; \
-	fi
-	@if [ ! -x "$(DESIGN_HOME)/out" ]; then \
-		echo "ERROR: $(DESIGN_HOME)/out was not found or is not executable."; \
+		echo "ERROR: DESIGN_HOME is not set. Please export it."; \
 		exit 1; \
 	fi
 	@echo "-------------------------------------------------------------------------"
-	@echo "Running Tests on C-CLASS"
-	@echo "RTL timeout = $(RTL_TIMEOUT)"
+	@echo "Running Tests on C-CLASS "
 	@echo "-------------------------------------------------------------------------"
 	@echo "Copying design files from $(DESIGN_HOME)"
 	cp -r "$(DESIGN_HOME)"/. $(OUT_DIR)/
-	elf2hex 8 4194304 \
-		$(OUT_DIR)/$(FILENAME).elf \
-		2147483648 \
-		> $(OUT_DIR)/code.mem
+	elf2hex  8  4194304  $(OUT_DIR)/$(FILENAME).elf 2147483648 > $(OUT_DIR)/code.mem
 	cd $(OUT_DIR) && \
-		timeout --foreground $(RTL_TIMEOUT) ./out +rtldump
+	timeout --foreground $(RTL_TIMEOUT) ./out +rtldump
 	@echo "-------------------------------------------------------------------------"
 	@echo "RTL RUN COMPLETED"
 	@echo "-------------------------------------------------------------------------"
 
-# -----------------------------------------------------------------------------
-# Compare Spike and RTL Dumps
-# -----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# Compare Spike and RTL dumps
+# ----------------------------------------------------------------------------
 
 compare:
 	@echo "-------------------------------------------------------------------------"
 	@echo "Comparing Spike and RTL Dumps"
 	@echo "-------------------------------------------------------------------------"
 
-	@test -f "$(OUT_DIR)/$(FILENAME).dump" || { \
+	@if [ ! -f "$(OUT_DIR)/$(FILENAME).dump" ]; then \
 		echo "ERROR: Spike dump not found."; \
 		exit 1; \
-	}
+	fi
 
-	@test -f "$(OUT_DIR)/rtl.dump" || { \
+	@if [ ! -f "$(OUT_DIR)/rtl.dump" ]; then \
 		echo "ERROR: RTL dump not found."; \
 		exit 1; \
-	}
+	fi
 
-	@head -n -$(RTL_SKIP_LINES) \
-		$(OUT_DIR)/rtl.dump \
-		> $(OUT_DIR)/rtl.trimmed.dump
+	@head -n -$(RTL_SKIP_LINES) $(OUT_DIR)/rtl.dump > $(OUT_DIR)/rtl.trimmed.dump
 
 	@sed -E \
-		's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' \
-		$(OUT_DIR)/$(FILENAME).dump \
-		> $(OUT_DIR)/spike.normalized.dump
-
+	-e 's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' \
+	-e '/\(0x[0-9a-fA-F]{3}0[37][0-9a-fA-F]{3}\)/ s/ c[0-9]+_[^ ]+ 0x[0-9a-fA-F]+$$//' \
+	$(OUT_DIR)/$(FILENAME).dump > $(OUT_DIR)/spike.normalized.dump
 	@sed -E \
-		's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' \
-		$(OUT_DIR)/rtl.trimmed.dump \
-		> $(OUT_DIR)/rtl.normalized.dump
+	-e 's/c2_frm (0x[0-9a-fA-F]+) c1_fflags (0x[0-9a-fA-F]+)/c1_fflags \2 c2_frm \1/g' \
+	-e '/\(0x[0-9a-fA-F]{3}0[37][0-9a-fA-F]{3}\)/ s/ c[0-9]+_[^ ]+ 0x[0-9a-fA-F]+$$//' \
+	$(OUT_DIR)/rtl.trimmed.dump > $(OUT_DIR)/rtl.normalized.dump
 
 	@diff -iwu \
-		$(OUT_DIR)/spike.normalized.dump \
-		$(OUT_DIR)/rtl.normalized.dump \
-		> $(OUT_DIR)/dump.diff || true
+	$(OUT_DIR)/spike.normalized.dump \
+	$(OUT_DIR)/rtl.normalized.dump \
+	> $(OUT_DIR)/dump.diff || true
 
 	@if [ -s "$(OUT_DIR)/dump.diff" ]; then \
 		echo "FAIL : Spike and RTL mismatch"; \
@@ -214,27 +181,46 @@ compare:
 		echo "PASS : Spike and RTL match"; \
 		rm -f $(OUT_DIR)/dump.diff; \
 	fi
+# ----------------------------------------------------------------------------
+# Self-check result verification (for timing-dependent or discovery tests)
+# ----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
+check_self:
+	@for dump in "$(OUT_DIR)/$(FILENAME).dump" "$(OUT_DIR)/rtl.dump"; do \
+		if [ ! -f "$$dump" ]; then \
+			echo "ERROR: $$dump not found"; \
+			exit 1; \
+		fi; \
+		if grep -Eq '\(0x00100193\) x3 +0x0*1$$' "$$dump"; then \
+			echo "PASS : $$(basename $$dump) reached RVTEST_PASS"; \
+		else \
+			echo "FAIL : $$(basename $$dump) did not reach RVTEST_PASS"; \
+			exit 1; \
+		fi; \
+	done
+
+run_verif_self:
+	@$(MAKE) --no-print-directory $(OUT_DIR)/$(FILENAME).elf MODE=$(MODE)
+	@$(MAKE) --no-print-directory disasm MODE=$(MODE)
+	@$(MAKE) --no-print-directory spike MODE=$(MODE)
+	@$(MAKE) --no-print-directory run_dut MODE=$(MODE)
+	@$(MAKE) --no-print-directory check_self MODE=$(MODE)
+	@echo "-------------------------------------------------------------------------"
+	@echo "SELF-CHECK VERIFICATION COMPLETED SUCCESSFULLY"
+	@echo "-------------------------------------------------------------------------"
+# ----------------------------------------------------------------------------
 # Full Verification Flow
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 run_verif:
-	@$(MAKE) --no-print-directory \
-		$(OUT_DIR)/$(FILENAME).elf MODE=$(MODE)
 
-	@$(MAKE) --no-print-directory \
-		disasm MODE=$(MODE)
+	@$(MAKE) --no-print-directory $(OUT_DIR)/$(FILENAME).elf MODE=$(MODE)
 
-	@$(MAKE) --no-print-directory \
-		spike MODE=$(MODE)
+	@$(MAKE) --no-print-directory disasm MODE=$(MODE)
 
-	@$(MAKE) --no-print-directory \
-		run_dut MODE=$(MODE)
-
-	@$(MAKE) --no-print-directory \
-		compare MODE=$(MODE)
-
+	@$(MAKE) --no-print-directory spike
+	@$(MAKE) --no-print-directory run_dut
+	@$(MAKE) --no-print-directory compare
 	@echo "-------------------------------------------------------------------------"
 	@echo "VERIFICATION COMPLETED SUCCESSFULLY"
 	@echo "-------------------------------------------------------------------------"
@@ -242,7 +228,6 @@ run_verif:
 # -----------------------------------------------------------------------------
 # Clean
 # -----------------------------------------------------------------------------
-
 clean:
-	@echo "Cleaning $(OUT_DIR)"
-	rm -rf $(OUT_DIR)
+	@echo "Cleaning $(CURDIR)/work/$(MODE)/$(FILENAME)"
+	rm -rf $(CURDIR)/work/$(MODE)/$(FILENAME)
