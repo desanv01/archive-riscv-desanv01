@@ -1,0 +1,274 @@
+#!/usr/bin/env python3
+"""Generate the complete 32-file AAPG configuration suite and manifest."""
+
+from __future__ import annotations
+
+import copy
+from pathlib import Path
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parent
+CONFIG_DIR = ROOT / "configs"
+
+ISA_KEYS = (
+    "rel_sys",
+    "rel_sys.csr",
+    "rel_rv32i.ctrl",
+    "rel_rv32i.compute",
+    "rel_rv32i.data",
+    "rel_rv32i.fence",
+    "rel_rv64i.compute",
+    "rel_rv64i.data",
+    "rel_rv32i.zba",
+    "rel_rv64i.zba",
+    "rel_rv32i.zbb",
+    "rel_rv64i.zbb",
+    "rel_rv32i.zbc",
+    "rel_rv32i.zbs",
+    "rel_rv32i.zbe",
+    "rel_rv64i.zbe",
+    "rel_rv32i.zbf",
+    "rel_rv64i.zbf",
+    "rel_rv64i.zbm",
+    "rel_rv32i.zbp",
+    "rel_rv64i.zbp",
+    "rel_rv32i.zbr",
+    "rel_rv64i.zbr",
+    "rel_rv32i.zbt",
+    "rel_rv64i.zbt",
+    "rel_rv32m",
+    "rel_rv64m",
+    "rel_rv32a",
+    "rel_rv64a",
+    "rel_rv32f",
+    "rel_rv64f",
+    "rel_rv32d",
+    "rel_rv64d",
+    "rel_rvc.ctrl",
+    "rel_rvc.compute",
+    "rel_rvc.sp",
+    "rel_rvc.data",
+    "rel_rvc.fdata",
+    "rel_rv32c.compute",
+    "rel_rv32c.ctrl",
+    "rel_rv32c.fdata",
+    "rel_rv64c.compute",
+    "rel_rv64c.data",
+)
+
+
+def zero_distribution() -> dict[str, int]:
+    return {key: 0 for key in ISA_KEYS}
+
+
+def distribution(**weights: int) -> dict[str, int]:
+    values = zero_distribution()
+    unknown = set(weights) - set(values)
+    if unknown:
+        raise ValueError(f"Unknown ISA distribution keys: {sorted(unknown)}")
+    values.update(weights)
+    return values
+
+
+BASE = {
+    "switch-priv-modes": {"switch_modes": False, "num_switches": 0},
+    "priv-mode": {"mode": "m"},
+    "general": {
+        "total_instructions": 2000,
+        "regs_not_use": "x0,x1,x2,x3,x4",
+        "custom_trap_handler": True,
+        "code_start_address": 0x80000000,
+        "default_program_exit": True,
+        "delegation": 0x000,
+    },
+    "isa-instruction-distribution": distribution(
+        **{
+            "rel_rv32i.compute": 10,
+            "rel_rv64i.compute": 10,
+        }
+    ),
+    "float-rounding": {"rne": 10, "rtz": 10, "rdn": 10, "rup": 10, "rmm": 10},
+    "branch-control": {"block-size": 7, "backward-probability": 0.5},
+    "recursion-options": {"recursion-enable": False, "recursion-depth": 10, "recursion-calls": 5},
+    "access-sections": {"begin_signature": "0x800e0000,0x800f0000,rw"},
+    "user-functions": {"func1": '{0:"add x0,x0,x0"}'},
+    "i-cache": {"num_calls": 0, "num_bytes_per_block": 16, "num_blocks": 8, "num_cycles": 10},
+    "d-cache": {"num_calls": 0, "num_bytes_per_block": 16, "num_blocks": 8, "num_cycles": 10},
+    "exception-generation": {f"ecause{i:02d}": 0 for i in range(15)},
+    "csr-sections": {"sections": "0x340:0x343"},
+    "data-hazards": {"raw_prob": 0.25, "war_prob": 0.25, "waw_prob": 0.25, "num_regs_lookbehind": 3},
+    "program-macro": {
+        "pre_program_macro": "add x0,x0,x0",
+        "post_program_macro": "add x0,x0,x0",
+        "pre_branch_macro": "add x0,x0,x0",
+        "post_branch_macro": "add x0,x0,x0",
+        **{f"ecause{i:02d}": "random" for i in range(15)},
+    },
+    "self-checking": {
+        "rate": 100,
+        "test_pass_macro": "la sp, begin_signature; addi sp, sp, 2*REGBYTES; li t1, 1; SREG t1, 0*REGBYTES(sp)",
+        "test_fail_macro": "la sp, begin_signature; addi sp, sp, 2*REGBYTES; li t1, 0; SREG t1, 0*REGBYTES(sp)",
+    },
+}
+
+
+I_BALANCED = distribution(
+    **{
+        # AAPG requires at least ten non-branch instructions per branch.
+        "rel_rv32i.ctrl": 3,
+        "rel_rv32i.compute": 10,
+        "rel_rv32i.data": 10,
+        "rel_rv32i.fence": 2,
+        "rel_rv64i.compute": 10,
+        "rel_rv64i.data": 10,
+    }
+)
+
+IMAC_BALANCED = copy.deepcopy(I_BALANCED)
+IMAC_BALANCED.update(
+    {
+        "rel_rv32m": 8,
+        "rel_rv64m": 8,
+        "rel_rv32a": 5,
+        "rel_rv64a": 5,
+        "rel_rvc.ctrl": 3,
+        "rel_rvc.compute": 6,
+        "rel_rvc.sp": 3,
+        "rel_rvc.data": 6,
+        "rel_rv64c.compute": 6,
+        "rel_rv64c.data": 6,
+    }
+)
+
+IMAFDC_BALANCED = copy.deepcopy(IMAC_BALANCED)
+IMAFDC_BALANCED.update(
+    {
+        "rel_rv32f": 6,
+        "rel_rv64f": 6,
+        "rel_rv32d": 6,
+        "rel_rv64d": 6,
+        "rel_rvc.fdata": 3,
+    }
+)
+
+
+def merge(base: dict, overlay: dict) -> dict:
+    result = copy.deepcopy(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = merge(result[key], value)
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
+
+
+def suite(
+    ident: str,
+    description: str,
+    category: str,
+    expected_groups: list[str],
+    overlay: dict,
+    *,
+    programs: int = 1,
+    self_checking: bool = False,
+) -> dict:
+    return {
+        "id": ident,
+        "description": description,
+        "category": category,
+        "expected_groups": expected_groups,
+        "seed": 760000 + int(ident[:2]) * 101,
+        "programs": programs,
+        "self_checking": self_checking,
+        "config": merge(BASE, overlay),
+    }
+
+
+SUITES = [
+    suite("01_rv64i_compute", "RV64I register/immediate and RV64 word computation", "isa", ["rv32i.compute", "rv64i.compute"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 20, "rel_rv64i.compute": 20})}),
+    suite("02_rv64i_control", "RV64I branches and jumps", "isa", ["rv32i.ctrl"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.ctrl": 5, "rel_rv32i.compute": 60}), "branch-control": {"block-size": 5, "backward-probability": 0.5}}),
+    suite("03_rv64i_memory", "RV64I load/store address generation", "isa", ["rv32i.data", "rv64i.data"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 3, "rel_rv32i.data": 20, "rel_rv64i.compute": 3, "rel_rv64i.data": 20})}),
+    suite("04_system_fence", "CSR and fence instruction generation", "isa", ["sys.csr", "rv32i.fence"], {"isa-instruction-distribution": distribution(**{"rel_sys": 0, "rel_sys.csr": 8, "rel_rv32i.compute": 5, "rel_rv32i.fence": 20}), "csr-sections": {"sections": "0x340:0x343"}}),
+    suite("05_rv64m", "RV64M multiply, divide and remainder operations", "isa", ["rv32m", "rv64m"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rv64i.compute": 5, "rel_rv32m": 20, "rel_rv64m": 20})}),
+    suite("06_rv64a_amo", "RV64A word/doubleword AMO operations and ordering bits", "isa", ["rv32a", "rv64a"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rv32i.data": 5, "rel_rv32a": 20, "rel_rv64a": 20})}),
+    suite("07_rv64a_lrsc", "Directed LR/SC acquire-release sequences through an AAPG user function", "isa", ["rv32a", "rv64a", "user-functions"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 10, "rel_rv32a": 5, "rel_rv64a": 5}), "user-functions": {"lrsc_sequence": '{30:"la t0, begin_signature; li t1, 1; sd t1, 0(t0); lr.d.aq t2, (t0); addi t2, t2, 1; sc.d.rl t3, t2, (t0); fence rw,rw"}'}}),
+    suite("08_rv64f", "Single-precision floating-point operations", "isa", ["rv32f", "rv64f"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rv32f": 20, "rel_rv64f": 20})}),
+    suite("09_rv64d", "Double-precision floating-point operations", "isa", ["rv32d", "rv64d"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rv32f": 3, "rel_rv64f": 3, "rel_rv32d": 20, "rel_rv64d": 20})}),
+    suite("10_fp_rounding_hazards", "F/D rounding modes with dense register dependencies", "isa", ["rv32f", "rv64f", "rv32d", "rv64d", "hazards"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 3, "rel_rv32f": 15, "rel_rv64f": 15, "rel_rv32d": 15, "rel_rv64d": 15}), "data-hazards": {"raw_prob": 0.9, "war_prob": 0.8, "waw_prob": 0.8, "num_regs_lookbehind": 8}}),
+    suite("11_rv64c_compute_data", "Compressed computation and data movement", "isa", ["rvc.compute", "rvc.data", "rv64c.compute", "rv64c.data"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 3, "rel_rvc.compute": 20, "rel_rvc.data": 20, "rel_rv64c.compute": 20, "rel_rv64c.data": 20})}),
+    suite("12_rv64c_control_stack", "Compressed control flow and stack-relative operations", "isa", ["rvc.ctrl", "rvc.sp"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rvc.ctrl": 2, "rel_rvc.sp": 20, "rel_rv64c.compute": 5}), "branch-control": {"block-size": 4, "backward-probability": 0.6}}),
+    suite("13_rv64imac_balanced", "Balanced integer, multiply, atomic and compressed mix", "mixed", ["I", "M", "A", "C"], {"general": {"total_instructions": 4000}, "isa-instruction-distribution": IMAC_BALANCED}),
+    suite("14_rv64imafdc_balanced", "Balanced full supported RV64IMAFDC mix", "mixed", ["I", "M", "A", "F", "D", "C"], {"general": {"total_instructions": 5000}, "isa-instruction-distribution": IMAFDC_BALANCED}),
+    suite("15_hazard_raw", "Read-after-write dependency stress", "hazard", ["hazards.raw"], {"general": {"total_instructions": 3000}, "isa-instruction-distribution": IMAC_BALANCED, "data-hazards": {"raw_prob": 1.0, "war_prob": 0.0, "waw_prob": 0.0, "num_regs_lookbehind": 6}}),
+    suite("16_hazard_war_waw", "Write-after-read and write-after-write dependency stress", "hazard", ["hazards.war", "hazards.waw"], {"general": {"total_instructions": 3000}, "isa-instruction-distribution": IMAC_BALANCED, "data-hazards": {"raw_prob": 0.1, "war_prob": 1.0, "waw_prob": 1.0, "num_regs_lookbehind": 6}}),
+    suite("17_register_pressure", "Small random register pool and deep dependency lookback", "hazard", ["register-pressure", "hazards"], {"general": {"total_instructions": 3000, "regs_not_use": "x0,x1,x2,x3,x4,x16,x17,x18,x19,x20,x21,x22,x23"}, "isa-instruction-distribution": merge(IMAC_BALANCED, {"rel_rv32i.ctrl": 0, "rel_rvc.ctrl": 0}), "data-hazards": {"raw_prob": 0.85, "war_prob": 0.85, "waw_prob": 0.85, "num_regs_lookbehind": 12}}),
+    suite("18_branch_forward", "Mostly forward branches with short blocks", "control", ["rv32i.ctrl", "branch.forward"], {"general": {"total_instructions": 2500}, "isa-instruction-distribution": distribution(**{"rel_rv32i.ctrl": 5, "rel_rv32i.compute": 60}), "branch-control": {"block-size": 3, "backward-probability": 0.05}}),
+    suite("19_branch_backward", "Mostly backward branches and loops", "control", ["rv32i.ctrl", "branch.backward"], {"general": {"total_instructions": 2500}, "isa-instruction-distribution": distribution(**{"rel_rv32i.ctrl": 5, "rel_rv32i.compute": 60}), "branch-control": {"block-size": 10, "backward-probability": 0.95}}),
+    suite("20_recursion", "Recursive call generation with controlled depth", "control", ["recursion"], {"general": {"total_instructions": 1500}, "isa-instruction-distribution": I_BALANCED, "recursion-options": {"recursion-enable": True, "recursion-depth": 16, "recursion-calls": 12}}),
+    suite("21_icache_stress", "Instruction-cache thrashing template", "cache", ["i-cache"], {"general": {"total_instructions": 1500}, "isa-instruction-distribution": I_BALANCED, "i-cache": {"num_calls": 16, "num_bytes_per_block": 32, "num_blocks": 32, "num_cycles": 16}}),
+    suite("22_dcache_stress", "Data-cache thrashing template", "cache", ["d-cache"], {"general": {"total_instructions": 1500}, "isa-instruction-distribution": I_BALANCED, "d-cache": {"num_calls": 16, "num_bytes_per_block": 32, "num_blocks": 32, "num_cycles": 16}}),
+    suite("23_access_boundaries", "Multiple legal load/store regions and boundary pressure", "memory", ["access-sections", "rv32i.data", "rv64i.data"], {"isa-instruction-distribution": distribution(**{"rel_rv32i.compute": 5, "rel_rv32i.data": 20, "rel_rv64i.data": 20}), "access-sections": {"begin_signature": "0x800e0000,0x800e1000,rw", "scratch_boundary": "0x800ef000,0x800f0000,rw"}}),
+    suite("24_csr_machine_legal", "Legal machine scratch/exception CSR accesses", "privilege", ["sys.csr", "priv.m"], {"isa-instruction-distribution": distribution(**{"rel_sys.csr": 20, "rel_rv32i.compute": 10}), "csr-sections": {"sections": "0x340:0x343"}}),
+    suite("25_csr_illegal_readonly", "CSR accesses to read-only counters and reserved ranges", "exception", ["sys.csr", "exception.illegal"], {"isa-instruction-distribution": distribution(**{"rel_sys.csr": 20, "rel_rv32i.compute": 10}), "csr-sections": {"sections": "0xc00:0xc1f, 0x7c0:0x7ff"}, "exception-generation": {"ecause02": 20}}),
+    suite("26_supervisor_delegation", "Supervisor entry, CSRs, delegated traps and S-mode ecall", "privilege", ["priv.s", "sys.csr", "exception.s-ecall"], {"priv-mode": {"mode": "s"}, "general": {"delegation": 0xFFF}, "isa-instruction-distribution": distribution(**{"rel_sys": 0, "rel_sys.csr": 10, "rel_rv32i.compute": 10, "rel_rv32i.data": 5}), "csr-sections": {"sections": "0x140:0x143"}, "exception-generation": {"ecause09": 12}}),
+    suite("27_user_delegation", "User entry, delegated traps and U-mode ecall", "privilege", ["priv.u", "exception.u-ecall"], {"priv-mode": {"mode": "u"}, "general": {"delegation": 0xFFF}, "isa-instruction-distribution": distribution(**{"rel_sys": 0, "rel_rv32i.compute": 15, "rel_rv32i.data": 10}), "csr-sections": {"sections": "0x001:0x003"}, "exception-generation": {"ecause08": 12}}),
+    suite("28_privilege_switch", "Randomized M/S/U privilege transitions", "privilege", ["priv.switch"], {"switch-priv-modes": {"switch_modes": True, "num_switches": 20}, "general": {"total_instructions": 3000, "delegation": 0xFFF}, "isa-instruction-distribution": I_BALANCED, "user-functions": {"func1": '{0:"add x0,x0,x0"}'}}),
+    suite("29_illegal_breakpoint", "Illegal instruction and breakpoint trap handling", "exception", ["exception.illegal", "exception.breakpoint"], {"general": {"total_instructions": 1800}, "isa-instruction-distribution": I_BALANCED, "exception-generation": {"ecause02": 20, "ecause03": 20}}),
+    suite("30_misaligned_access", "Instruction/load/store misalignment and access-fault traps", "exception", ["exception.misaligned", "exception.access-fault"], {"general": {"total_instructions": 1800}, "isa-instruction-distribution": I_BALANCED, "exception-generation": {"ecause00": 10, "ecause01": 10, "ecause04": 10, "ecause05": 10, "ecause06": 10, "ecause07": 10}}),
+    suite("31_self_checking", "AAPG checksum-based self-checking program", "generator", ["self-checking"], {"general": {"total_instructions": 1000, "default_program_exit": False}, "isa-instruction-distribution": I_BALANCED, "access-sections": {"begin_signature": "0x80091000,0x80095000,rw"}, "program-macro": {"post_program_macro": "li gp,1; sw gp, tohost, t5; fence.i; li t6, 0x20000; la t5, begin_signature; sw t5, 0(t6); la t5, end_signature; sw t5, 8(t6); sw t5, 12(t6);"}, "self-checking": {"rate": 25}}, self_checking=True),
+    suite("32_long_multiseed", "Long mixed RV64IMAFDC multi-seed soak", "stress", ["I", "M", "A", "F", "D", "C", "multi-seed"], {"general": {"total_instructions": 10000}, "isa-instruction-distribution": IMAFDC_BALANCED, "data-hazards": {"raw_prob": 0.65, "war_prob": 0.65, "waw_prob": 0.65, "num_regs_lookbehind": 8}}, programs=3),
+]
+
+
+def main() -> None:
+    if len(SUITES) != 32:
+        raise RuntimeError(f"Expected 32 suites, found {len(SUITES)}")
+    ids = [item["id"] for item in SUITES]
+    if len(ids) != len(set(ids)):
+        raise RuntimeError("Suite identifiers must be unique")
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    manifest_suites = []
+    for item in SUITES:
+        config_path = CONFIG_DIR / f"{item['id']}.yaml"
+        header = (
+            "# Generated by generate_configs.py.\n"
+            f"# Suite: {item['id']}\n"
+            f"# Purpose: {item['description']}\n"
+        )
+        config_path.write_text(
+            header + yaml.safe_dump(item["config"], sort_keys=False, width=140),
+            encoding="ascii",
+        )
+        manifest_suites.append(
+            {
+                "id": item["id"],
+                "config": f"configs/{item['id']}.yaml",
+                "description": item["description"],
+                "category": item["category"],
+                "expected_groups": item["expected_groups"],
+                "seed": item["seed"],
+                "programs": item["programs"],
+                "self_checking": item["self_checking"],
+            }
+        )
+
+    manifest = {
+        "version": 1,
+        "architecture": "rv64",
+        "isa": "rv64imafdczicsr_zifencei",
+        "abi": "lp64",
+        "suite_count": len(manifest_suites),
+        "suites": manifest_suites,
+    }
+    (ROOT / "suite_manifest.yaml").write_text(
+        "# Generated by generate_configs.py.\n" + yaml.safe_dump(manifest, sort_keys=False, width=140),
+        encoding="ascii",
+    )
+    print(f"Generated {len(SUITES)} complete configurations in {CONFIG_DIR}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+work/
+cov.xml
+coverage/
+tests/.tmp/
+
+.pip-tmp/
+.aapg-smoke-*/
